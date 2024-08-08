@@ -21,7 +21,12 @@ public enum CustomHashable: ExtensionMacro {
             stringLiteral: "extension \(type.trimmed): Hashable"
         )
         
-        let params = CodeBlockItemSyntaxBuilder(code: prepareParams(node: node))
+        let params = CodeBlockItemSyntaxBuilder(
+            code: prepareParams(
+                node: node,
+                members: declaration.memberBlock.members
+            )
+        )
         let builder = FunctionDeclSyntaxBuilder(
             declaration: "public func hash(into hasher: inout Hasher)"
         )
@@ -39,7 +44,10 @@ public enum CustomHashable: ExtensionMacro {
         return syntax
     }
     
-    private static func prepareParams(node: AttributeSyntax) -> String {
+    private static func prepareParams(
+        node: AttributeSyntax,
+        members: MemberBlockItemListSyntax
+    ) -> String {
         let parameters = node
             .adapter
             .findArgument(id: "parameters")?
@@ -51,7 +59,24 @@ public enum CustomHashable: ExtensionMacro {
         var stringValue = """
         """
         
-        for item in parameters {
+        let names: [String] = members.compactMap { member -> String? in
+            guard let casted = member.decl.as(VariableDeclSyntax.self) else {
+                return nil
+            }
+            
+            return casted.bindings.first?.pattern.description
+        }
+        
+        let validParams: [String] = parameters
+            .compactMap { param -> String? in
+                if names.contains(param) {
+                    return param
+                }
+                
+                return nil
+        }
+        
+        for item in validParams {
             stringValue.append("hasher.combine(\(item))")
         }
         

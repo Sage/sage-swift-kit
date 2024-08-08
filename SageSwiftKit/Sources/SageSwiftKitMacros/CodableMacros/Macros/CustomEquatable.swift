@@ -15,13 +15,17 @@ public enum CustomEquatable: ExtensionMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-
         var syntax: [ExtensionDeclSyntax] = []
         let initObject = SyntaxNodeString.init(
             stringLiteral: "extension \(type.trimmed): Equatable"
         )
         
-        let params = CodeBlockItemSyntaxBuilder(code: prepareParams(node: node))
+        let params = CodeBlockItemSyntaxBuilder(
+            code: prepareParams(
+                node: node,
+                members: declaration.memberBlock.members
+            )
+        )
         let builder = FunctionDeclSyntaxBuilder(
             declaration: "public static func == (lhs: \(type.trimmed), rhs: \(type.trimmed)) -> Bool"
         )
@@ -39,7 +43,10 @@ public enum CustomEquatable: ExtensionMacro {
         return syntax
     }
     
-    private static func prepareParams(node: AttributeSyntax) -> String {
+    private static func prepareParams(
+        node: AttributeSyntax,
+        members: MemberBlockItemListSyntax
+    ) -> String {
         let parameters = node
             .adapter
             .findArgument(id: "parameters")?
@@ -48,17 +55,34 @@ public enum CustomEquatable: ExtensionMacro {
         
         guard let parameters = parameters else { return "" }
         
+        let names: [String] = members.compactMap { member -> String? in
+            guard let casted = member.decl.as(VariableDeclSyntax.self) else {
+                return nil
+            }
+            
+            return casted.bindings.first?.pattern.description
+        }
+
         var stringValue = """
         """
         
-        for (index, item) in parameters.enumerated() {
-            if index == 0 && parameters.count == 1 {
+        let validParams: [String] = parameters
+            .compactMap { param -> String? in
+                if names.contains(param) {
+                    return param
+                }
+                
+                return nil
+        }
+        
+        for (index, item) in validParams.enumerated() {
+            if index == 0 && validParams.count == 1 {
                 stringValue.append("lhs.\(item) == rhs.\(item)")
             } else if index == 0 {
                 stringValue.append("lhs.\(item) == rhs.\(item) && ")
-            }else if index != 0 && item != parameters.last {
+            } else if index != 0 && item != validParams.last {
                 stringValue.append("lhs.\(item) == rhs.\(item) && ")
-            }else if index != 0 && item == parameters.last {
+            } else if index != 0 && item == validParams.last {
                 stringValue.append("lhs.\(item) == rhs.\(item)")
             }
         }

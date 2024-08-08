@@ -46,7 +46,7 @@ enum DecodingAttribute: Identifiable, Equatable {
 
 extension Array where Element == DecodingAttribute {
     func getAttribute(macro: PeerMacro.Type) -> DecodingAttribute? {
-        self.first(where: { $0.id == String(describing: macro)} )
+        self.first(where: { $0.id == String(describing: macro) })
     }
 }
 
@@ -173,7 +173,6 @@ struct DecodeVariableBuild {
     }
     
     func buildStringOrInt(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
-
         guard type == "String" else {
             return buildBasicDecode()
         }
@@ -232,6 +231,7 @@ struct DecodeVariableBuild {
         
         return .init(otherBuilder: ifBuilder)
     }
+    
     func buildCustomURL(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
                 
         let body: [CodeBlockItemSyntaxBuilder] = [
