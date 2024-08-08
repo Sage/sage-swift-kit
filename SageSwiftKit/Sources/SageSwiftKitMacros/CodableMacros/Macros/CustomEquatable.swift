@@ -56,9 +56,9 @@ public enum CustomEquatable: ExtensionMacro {
                 stringValue.append("lhs.\(item) == rhs.\(item)")
             } else if index == 0 {
                 stringValue.append("lhs.\(item) == rhs.\(item) && ")
-            }else if index != 0 && item != parameters.last {
+            } else if index != 0 && item != parameters.last {
                 stringValue.append("lhs.\(item) == rhs.\(item) && ")
-            }else if index != 0 && item == parameters.last {
+            } else if index != 0 && item == parameters.last {
                 stringValue.append("lhs.\(item) == rhs.\(item)")
             }
         }

@@ -232,6 +232,7 @@ struct DecodeVariableBuild {
         
         return .init(otherBuilder: ifBuilder)
     }
+    
     func buildCustomURL(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
                 
         let body: [CodeBlockItemSyntaxBuilder] = [
