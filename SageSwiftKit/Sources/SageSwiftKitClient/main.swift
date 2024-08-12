@@ -19,7 +19,6 @@ struct SubObject: Codable {
 }
 
 @CustomCodable
-@CustomHashable(parameters: ["identifier", "value"])
 @CustomEquatable(parameters: ["value", "identifier"])
 struct PlayingObject {
 

@@ -21,4 +21,8 @@ let codableMacros: [String: Macro.Type] = [
     "StringOrInt": StringOrInt.self,
     "StringToDouble": StringToDouble.self
 ]
+
+let mockableMacros: [String: Macro.Type] = [
+    "AutoMockable": AutoMockable.self
+]
 #endif
