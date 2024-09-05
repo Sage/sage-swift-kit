@@ -34,6 +34,3 @@ struct AttributeSyntaxAdapter {
         arguments.first(where: { $0.adapter.identifier == id })
     }
 }
-
-
-

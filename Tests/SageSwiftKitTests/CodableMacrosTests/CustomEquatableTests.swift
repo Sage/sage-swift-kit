@@ -10,7 +10,7 @@ import SwiftSyntaxMacrosTestSupport
 import XCTest
 
 final class CustomEquatableTests: XCTestCase {
-    func testMacro() {
+    func testMacro() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """

@@ -58,7 +58,7 @@ public enum AutoMockable: PeerMacro {
                     mockClass.appendItem(item: variableSybtax)
                 }
                 
-                if let returnVariable = try varsBuilder.returnVariable(){
+                if let returnVariable = try varsBuilder.returnVariable() {
                     mockClass.appendItem(item: returnVariable)
                 }
             }

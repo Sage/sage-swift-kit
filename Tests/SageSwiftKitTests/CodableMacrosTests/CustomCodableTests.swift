@@ -10,7 +10,7 @@ import SwiftSyntaxMacrosTestSupport
 import XCTest
 
 final class CustomCodableTests: XCTestCase {
-    func testCodable() {
+    func testCodable() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """
@@ -45,7 +45,7 @@ final class CustomCodableTests: XCTestCase {
 #endif
     }
     
-    func testNestedCodable() {
+    func testNestedCodable() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """
