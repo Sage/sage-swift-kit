@@ -15,14 +15,12 @@ struct Argument {
     }
 }
 
-
 struct ArgumentsSyntaxBuilder {
     let arguments: [Argument]
     
     init(arguments: [Argument]) {
         self.arguments = arguments
     }
-    
     
     var build: LabeledExprListSyntax {
         .init(itemsBuilder: {

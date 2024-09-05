@@ -40,9 +40,6 @@ struct MockableVariablesBuilder {
         )
     }
     
-    
-    
-    
     var parametersTupple: String? {
         guard let clause = functionSyntax.signature.parameterClause.as(FunctionParameterClauseSyntax.self) else {
             return nil

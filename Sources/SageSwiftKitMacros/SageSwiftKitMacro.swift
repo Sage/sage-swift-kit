@@ -23,4 +23,3 @@ struct SageSwiftKitPlugin: CompilerPlugin {
         return macros
     }
 }
-

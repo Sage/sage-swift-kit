@@ -10,7 +10,7 @@ import SwiftSyntaxMacrosTestSupport
 import XCTest
 
 final class CustomDecodableTests: XCTestCase {
-    func testCustomDefault() {
+    func testCustomDefault() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """
@@ -46,7 +46,7 @@ final class CustomDecodableTests: XCTestCase {
 #endif
     }
     
-    func testCustomDate() {
+    func testCustomDate() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """
@@ -89,7 +89,7 @@ final class CustomDecodableTests: XCTestCase {
 #endif
     }
     
-    func testCustomURL() {
+    func testCustomURL() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """
@@ -129,7 +129,7 @@ final class CustomDecodableTests: XCTestCase {
 #endif
     }
     
-    func testStringOrInt() {
+    func testStringOrInt() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
     """

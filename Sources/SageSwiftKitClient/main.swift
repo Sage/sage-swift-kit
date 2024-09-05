@@ -10,7 +10,6 @@ protocol FooProtocol {
     func tmpFunc(var1: @escaping (String?) -> Void, var2: AnyPublisher<Bool, Never>) -> Void
 }
 
-
 let mockProtocol: FooProtocolMock = .init()
 
 struct SubObject: Codable {

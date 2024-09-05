@@ -34,4 +34,3 @@ struct EncoderInitBuilder {
         .init(code: "var container = encoder.container(keyedBy: CodingKeys.self)")
     }
 }
-
