@@ -18,7 +18,6 @@ struct SubObject: Codable {
 }
 
 @CustomCodable
-@CustomEquatable(parameters: ["value", "identifier"])
 struct PlayingObject {
 
     @StringOrInt
