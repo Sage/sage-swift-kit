@@ -9,4 +9,16 @@ extension String {
     var tokenSyntax: TokenSyntax {
         .init(stringLiteral: self)
     }
+    
+    var declSyntax: DeclSyntax {
+        get throws {
+            try .init(validating: "\(raw: self)")
+        }
+    }
+    
+    var codeBlock: CodeBlockItemSyntax {
+        get throws {
+            try .init(validating: "\(raw: self)")
+        }
+    }
 }
