@@ -45,6 +45,9 @@ let package = Package(
             dependencies: [
                 "SageSwiftKitMacros",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+            ],
+            resources: [
+                .process("Mocks")
             ]
         ),
     ]

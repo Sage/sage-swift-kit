@@ -25,4 +25,8 @@ let codableMacros: [String: Macro.Type] = [
 let mockableMacros: [String: Macro.Type] = [
     "AutoMockable": AutoMockable.self
 ]
+
+let jsonMockableMacros: [String: Macro.Type] = [
+    "JsonMockable": JsonMockable.self
+]
 #endif

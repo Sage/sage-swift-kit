@@ -19,6 +19,7 @@ struct SageSwiftKitPlugin: CompilerPlugin {
         
         macros.append(contentsOf: CobableMacros().providingMacros)
         macros.append(contentsOf: MockableMacros().providingMacros)
+        macros.append(contentsOf: JsonMockableMacros().providingMacros)
         
         return macros
     }
