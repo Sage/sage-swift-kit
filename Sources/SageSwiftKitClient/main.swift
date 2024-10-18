@@ -39,3 +39,25 @@ struct PlayingObject {
     
     var identifier: Int
 }
+
+
+@JsonMockable(
+    keyDecodingStrategy: .convertFromSnakeCase,
+    bundle: .main
+)
+struct User: Decodable {
+    var example: String
+    
+    static var mockA: Self {
+        get throws {
+            try getMock(bundle: .main, keyDecodingStrategy: .convertFromSnakeCase, fileName: "fileA")
+        }
+    }
+    
+    static var mockB: Self {
+        get throws {
+            try getMock(bundle: .main, keyDecodingStrategy: .convertFromSnakeCase, fileName: "fileB")
+        }
+    }
+       
+}

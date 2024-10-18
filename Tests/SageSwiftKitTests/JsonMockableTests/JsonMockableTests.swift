@@ -22,7 +22,17 @@ final class JsonMockableTests: XCTestCase {
     expandedSource: """
         
     struct Example {
-
+    
+        private static func getMock(bundle: Bundle, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy, fileName: String?) throws -> Self {
+            let mockURL = bundle.url(forResource: fileName, withExtension: "json")
+            guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
+                throw NSError(domain: "No data found", code: 500)
+            }
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = keyDecodingStrategy
+            return try decoder.decode(Example.self, from: data)
+        }
+    
         public static var jsonMock: Example {
             get throws {
                 var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy {
@@ -34,13 +44,7 @@ final class JsonMockableTests: XCTestCase {
                 var fileName: String {
                     String(describing: Example.self)
                 }
-                let mockURL = bundle.url(forResource: fileName, withExtension: "json")
-                guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
-                    throw NSError(domain: "No data found", code: 500)
-                }
-                let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = keyDecodingStrategy
-                return try decoder.decode(Example.self, from: data)
+                return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)
             }
         }}
     """,
@@ -66,7 +70,17 @@ final class JsonMockableTests: XCTestCase {
     expandedSource: """
         
     struct Example {
-
+    
+        private static func getMock(bundle: Bundle, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy, fileName: String?) throws -> Self {
+            let mockURL = bundle.url(forResource: fileName, withExtension: "json")
+            guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
+                throw NSError(domain: "No data found", code: 500)
+            }
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = keyDecodingStrategy
+            return try decoder.decode(Example.self, from: data)
+        }
+    
         public static var jsonMock: Example {
             get throws {
                 var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy {
@@ -78,13 +92,7 @@ final class JsonMockableTests: XCTestCase {
                 var fileName: String {
                     "customFile"
                 }
-                let mockURL = bundle.url(forResource: fileName, withExtension: "json")
-                guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
-                    throw NSError(domain: "No data found", code: 500)
-                }
-                let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = keyDecodingStrategy
-                return try decoder.decode(Example.self, from: data)
+                return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)
             }
         }}
     """,

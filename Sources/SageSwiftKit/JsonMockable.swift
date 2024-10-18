@@ -5,7 +5,7 @@
 import Foundation
 
 
-@attached(member, names: named(jsonMock))
+@attached(member, names: arbitrary)
 public macro JsonMockable(
     keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy,
     bundle: Bundle,

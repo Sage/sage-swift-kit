@@ -25,6 +25,43 @@ public enum JsonMockable: MemberMacro {
         
         guard let name else { return declSyntax }
         
+        let function = FunctionDeclSyntax(
+            modifiers: .init(itemsBuilder: {
+                DeclModifierSyntax(name: "private")
+                DeclModifierSyntax(name: "static")
+            }),
+            name: "getMock",
+            signature: FunctionSignatureSyntax(
+                parameterClause: FunctionParameterClauseSyntax(
+                    parameters: FunctionParameterListSyntax(itemsBuilder: {
+                        getBundleParamter()
+                        getKeyDecodingStrategyParam()
+                        getFileNameParam()
+                    })
+                ),
+                effectSpecifiers: FunctionEffectSpecifiersSyntax(
+                    throwsSpecifier: "throws".tokenSyntax
+                ),
+                returnClause: ReturnClauseSyntax(
+                    type: IdentifierTypeSyntax(name: "Self")
+                )
+            ),
+            body: try CodeBlockSyntax(statementsBuilder: {
+                try "let mockURL = bundle.url(forResource: fileName, withExtension: \"json\")".codeBlock
+                
+                try getDataGuard()
+                
+                try "let decoder = JSONDecoder()".codeBlock
+                try "decoder.keyDecodingStrategy = keyDecodingStrategy".codeBlock
+                
+                try "return try decoder.decode(\(name).self, from: data)".codeBlock
+            })
+        )
+        
+        declSyntax.append(DeclSyntax(function))
+        
+        
+        
         let variable = try VariableDeclSyntax(
             "public static var jsonMock: \(name.tokenSyntax)") {
                 try .init(itemsBuilder: {
@@ -32,27 +69,20 @@ public enum JsonMockable: MemberMacro {
                         accessorSpecifier: .keyword(.get),
                         effectSpecifiers: AccessorEffectSpecifiersSyntax(throwsSpecifier: "throws".tokenSyntax),
                         bodyBuilder: {
-                        if let keyDecodingStrategy = try getKeyDecodingStrategy(node: node) {
-                            keyDecodingStrategy
-                        }
-                        
-                        if let bundleValue = try getBundle(node: node) {
-                            bundleValue
-                        }
-                        
-                        if let fileName = try getJsonFileName(node: node, name: name) {
-                            fileName
-                        }
-                        
-                        try "let mockURL = bundle.url(forResource: fileName, withExtension: \"json\")".codeBlock
-                        
-                        try getDataGuard()
-                        
-                        try "let decoder = JSONDecoder()".codeBlock
-                        try "decoder.keyDecodingStrategy = keyDecodingStrategy".codeBlock
-                        
-                        try "return try decoder.decode(\(name).self, from: data)".codeBlock
-                    })
+                            if let keyDecodingStrategy = try getKeyDecodingStrategy(node: node) {
+                                keyDecodingStrategy
+                            }
+                            
+                            if let bundleValue = try getBundle(node: node) {
+                                bundleValue
+                            }
+                            
+                            if let fileName = try getJsonFileName(node: node, name: name) {
+                                fileName
+                            }
+                            
+                            try "return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)".codeBlock
+                        })
                 })
             }
         
@@ -63,70 +93,86 @@ public enum JsonMockable: MemberMacro {
         return declSyntax
     }
     
-    static func getDataGuard() throws -> GuardStmtSyntax {
-      return GuardStmtSyntax(
-        guardKeyword: .keyword(.guard),
-        conditions: .init(
-            itemsBuilder: {
-                ConditionElementSyntax(condition: .expression("let mockURL"))
-                ConditionElementSyntax(condition: .expression("let data = try? Data(contentsOf: mockURL) "))
-            }),
-        elseKeyword: .keyword(.else),
-        bodyBuilder: {
-            "throw NSError(domain: \"No data found\", code: 500)"
-        }
-      )
+    static func getBundleParamter() -> FunctionParameterSyntax {
+        FunctionParameterSyntax(
+            firstName: "bundle".tokenSyntax,
+            type: IdentifierTypeSyntax(name: "Bundle")
+        )
     }
     
-    static func getKeyDecodingStrategy(node: AttributeSyntax) throws -> DeclSyntax? {
+    static func getKeyDecodingStrategyParam() -> FunctionParameterSyntax {
+        FunctionParameterSyntax(
+            firstName: "keyDecodingStrategy".tokenSyntax,
+            type: IdentifierTypeSyntax(name: "JSONDecoder.KeyDecodingStrategy")
+        )
+    }
+    
+    static func getFileNameParam() -> FunctionParameterSyntax {
+        FunctionParameterSyntax(
+            firstName: "fileName".tokenSyntax,
+            type: IdentifierTypeSyntax(name: "String?")
+        )
+    }
+    
+    static func getDataGuard() throws -> GuardStmtSyntax {
+        return GuardStmtSyntax(
+            guardKeyword: .keyword(.guard),
+            conditions: .init(
+                itemsBuilder: {
+                    ConditionElementSyntax(condition: .expression("let mockURL"))
+                    ConditionElementSyntax(condition: .expression("let data = try? Data(contentsOf: mockURL) "))
+                }),
+            elseKeyword: .keyword(.else),
+            bodyBuilder: {
+                "throw NSError(domain: \"No data found\", code: 500)"
+            }
+        )
+    }
+    
+    static func getKeyDecodingStrategy(node: AttributeSyntax) throws -> VariableDeclSyntax? {
         guard let value = node
             .adapter
             .findArgument(id: "keyDecodingStrategy")?
             .adapter
             .expression(cast: MemberAccessExprSyntax.self) else { return nil }
         
-        return try DeclSyntax(
-            VariableDeclSyntax("var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy") {
-                .init(itemsBuilder: {
-                    value
-                })
-            }
-        )
+        return try VariableDeclSyntax("var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy") {
+            .init(itemsBuilder: {
+                value
+            })
+        }
     }
     
-    static func getBundle(node: AttributeSyntax) throws -> DeclSyntax? {
+    static func getBundle(node: AttributeSyntax) throws -> VariableDeclSyntax? {
         guard let value = node
             .adapter
             .findArgument(id: "bundle")?
             .adapter
             .expression(cast: MemberAccessExprSyntax.self) else { return nil }
         
-        return try DeclSyntax(
-            VariableDeclSyntax("var bundle: Bundle") {
-                .init(itemsBuilder: {
-                    value
-                })
-            }
-        )
+        return try
+        VariableDeclSyntax("var bundle: Bundle") {
+            .init(itemsBuilder: {
+                value
+            })
+        }
     }
     
-    static func getJsonFileName(node: AttributeSyntax, name: String) throws -> DeclSyntax? {
+    static func getJsonFileName(node: AttributeSyntax, name: String) throws -> VariableDeclSyntax? {
         let value = node
             .adapter
             .findArgument(id: "jsonFile")?
             .adapter
             .expression(cast: StringLiteralExprSyntax.self)
         
-        return try DeclSyntax(
-            VariableDeclSyntax("var fileName: String") {
-                .init(itemsBuilder: {
-                    if let value {
-                        value
-                    } else {
-                        CodeBlockItemSyntax(stringLiteral: "String(describing: \(name).self)")
-                    }
-                })
-            }
-        )
+        return try VariableDeclSyntax("var fileName: String") {
+            .init(itemsBuilder: {
+                if let value {
+                    value
+                } else {
+                    CodeBlockItemSyntax(stringLiteral: "String(describing: \(name).self)")
+                }
+            })
+        }
     }
 }
