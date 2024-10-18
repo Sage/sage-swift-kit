@@ -99,22 +99,6 @@ Example:
     
     extension Vehicle: Codable {}
 
-#### Custom Date - CustomDate(dateFormat: String, defaultValue: Date? = nil)
-Allows you to decode Strings into Dates with default values
-
-Example:
-
-    @CustomCodable
-    struct Vehicle {
-        let wheels: Int
-        @CustomDate(dateFormat: "YYYYY-mm-dd", defaultValue: Date())
-        let designed: Date
-        let maxSpeed: Int
-        let name: String
-    }
-    
-    extension Vehicle: Codable {}
-
 #### Custom Hashable - CustomHashable(parameters: [String])
 Allows you to add Hashable conformance providing the properties you want to use.
 
@@ -164,7 +148,7 @@ will expand to:
         }
     }
 
-#### Custom URL - CustomDate(dateFormat: String, defaultValue: Date? = nil)
+#### Custom URL
 Allows you to decode Strings into optional URL
 
 Example:
