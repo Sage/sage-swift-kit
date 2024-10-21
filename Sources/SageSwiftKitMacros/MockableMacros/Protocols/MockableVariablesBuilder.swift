@@ -17,7 +17,15 @@ struct MockableVariablesBuilder {
         self.accessLevel = accessLevel
     }
     
-    private var name: String { functionSyntax.name.text }
+    private var name: String {
+        let name = functionSyntax.name.text
+        
+        let params = allParameters ?? []
+        
+        return params.reduce(name, { acc, param -> String in
+            return acc+"_\(param.firstName.text)"
+        })
+    }
     
     var callsCountName: String { "\(name)CallsCount" }
     var calledName: String { "\(name)Called" }
@@ -40,30 +48,28 @@ struct MockableVariablesBuilder {
         )
     }
     
-    var parametersTupple: String? {
+    var allParameters: [FunctionParameterSyntax]? {
         guard let clause = functionSyntax.signature.parameterClause.as(FunctionParameterClauseSyntax.self) else {
             return nil
         }
         
-        let allParameters: [FunctionParameterSyntax] = clause.parameters.compactMap { $0.as(FunctionParameterSyntax.self) }
+        return clause.parameters.compactMap { $0.as(FunctionParameterSyntax.self)
+        }
+    }
+    
+    var parametersTupple: String? {
+        guard let allParameters else { return nil }
         
-        var parameterTupple: (FunctionParameterSyntax) -> String = { (param: FunctionParameterSyntax) -> String in
+        let parameterTupple: (FunctionParameterSyntax) -> String = { (param: FunctionParameterSyntax) -> String in
             let name = param.secondName?.text ?? param.firstName.text
             
-            if var attributed = param.type.as(AttributedTypeSyntax.self) {
-                attributed.attributes = .init(stringLiteral: "")
-                return "\(name): \(attributed.description)"
-            }
+            let description = param.type.description.replacingOccurrences(of: "@escaping", with: "")
             
-            if var identifier = param.type.as(IdentifierTypeSyntax.self) {
-                return "\(name): \(identifier.description)"
-            }
-            
-            return "\(name): \(param.description)"
+            return "\(name): \(description)"
         }
         
         if allParameters.count == 1 {
-            return parameterTupple(allParameters[0])
+            return allParameters[0].type.description
         }
         
         return allParameters.reduce("", { acc, param in
@@ -78,7 +84,16 @@ struct MockableVariablesBuilder {
     }
     
     func parametersVar() throws -> VariableDeclSyntax? {
-        guard let parametersTupple else { return nil }
+        guard let parametersTupple, let allParameters else { return nil }
+        
+        if allParameters.count == 1 {
+            return try .init(
+                .init(stringLiteral: "\(accessLevel) var \(parametersName): \(parametersTupple)?"),
+                accessor: {
+                    .init(stringLiteral: "self.\(parametersNameCall).last")
+                }
+            )
+        }
         
         return try .init(
             .init(stringLiteral: "\(accessLevel) var \(parametersName): (\(parametersTupple))?"),
@@ -97,17 +112,22 @@ struct MockableVariablesBuilder {
     }
     
     func returnVariable() throws -> VariableDeclSyntax? {
-        guard let returnValue = functionSyntax.signature.returnClause,
-              let type = returnValue.type.as(IdentifierTypeSyntax.self) else { 
+        guard let returnValue = functionSyntax.signature.returnClause else {
             return nil
         }
         
-        if type.name.text == "Void" {
+        if returnValue.description.contains("Void") {
             return nil
+        }
+        
+        if returnValue.description.contains("?") {
+            return try .init(
+                .init(stringLiteral: "\(accessLevel) var \(returnName): \(returnValue.type.description)")
+            )
         }
         
         return try .init(
-            .init(stringLiteral: "\(accessLevel) var \(returnName): \(type.description)!")
+            .init(stringLiteral: "\(accessLevel) var \(returnName): \(returnValue.type.description)!")
         )
     }
 }

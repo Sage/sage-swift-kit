@@ -53,6 +53,7 @@ struct MockableFunctionBuilder {
     }
     
     private var argumentsRegistration: CodeBlockItemSyntax {
+        let allParameters = variables.allParameters ?? []
         let varName = variables.parametersNameCall
         
         let callVariables: String = variablesName.reduce("", { acc, name in
@@ -64,6 +65,10 @@ struct MockableFunctionBuilder {
                 return acc+", "+callVariable
             }
         })
+        
+        if allParameters.count == 1 {
+            return .init(stringLiteral: "self.\(varName).append(\(variablesName.first ?? ""))")
+        }
         
         return .init(stringLiteral: "self.\(varName).append((\(callVariables)))")
     }
