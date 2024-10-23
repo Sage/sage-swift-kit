@@ -172,4 +172,48 @@ final class CustomDecodableTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
 #endif
     }
+    
+    func testStringOrDouble() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    @CustomCodable
+    struct PlayingObject {
+        @StringOrDouble
+        var value: String
+    }
+    """,
+    expandedSource: """
+    struct PlayingObject {
+        var value: String
+    
+        enum CodingKeys: String, CodingKey {
+            case value
+        }
+    
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            if let tmpValue = try? container.decode(String.self, forKey: .value) {
+                value = tmpValue
+            } else {
+                if let tmpValue = try? container.decode(Double.self, forKey: .value) {
+                    value = String(tmpValue)
+                } else {
+                    value = nil
+                }
+            }
+        }
+    
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(value, forKey: .value)
+        }
+    }
+    """,
+    macros: codableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
 }

@@ -11,6 +11,7 @@ enum DecodingAttribute: Identifiable, Equatable {
     case date(AttributeSyntax)
     case url(AttributeSyntax)
     case stringOrInt(AttributeSyntax)
+    case stringOrDouble(AttributeSyntax)
     case stringToDouble(AttributeSyntax)
     
     var id: String {
@@ -23,6 +24,8 @@ enum DecodingAttribute: Identifiable, Equatable {
             return String(describing: CustomURL.self)
         case .stringOrInt:
             return String(describing: StringOrInt.self)
+        case .stringOrDouble:
+            return String(describing: StringOrDouble.self)
         case .stringToDouble:
             return String(describing: StringToDouble.self)
         }
@@ -37,6 +40,8 @@ enum DecodingAttribute: Identifiable, Equatable {
         case .url(let attributeSyntax):
             return attributeSyntax
         case .stringOrInt(let attributeSyntax):
+            return attributeSyntax
+        case .stringOrDouble(let attributeSyntax):
             return attributeSyntax
         case .stringToDouble(let attributeSyntax):
             return attributeSyntax
@@ -87,6 +92,10 @@ struct DecodeVariableBuild {
                 return .stringOrInt(variableAttribute)
             }
             
+            if variableAttribute.adapter.name == String(describing: StringOrDouble.self) {
+                return .stringOrDouble(variableAttribute)
+            }
+            
             if variableAttribute.adapter.name == String(describing: StringToDouble.self) {
                 return .stringToDouble(variableAttribute)
             }
@@ -110,6 +119,10 @@ struct DecodeVariableBuild {
 
         if let attribute = variableDecodingAttributes.getAttribute(macro: StringOrInt.self)?.attribute {
             return buildStringOrInt(attribute: attribute)
+        }
+        
+        if let attribute = variableDecodingAttributes.getAttribute(macro: StringOrDouble.self)?.attribute {
+            return buildStringOrDouble(attribute: attribute)
         }
         
         if let attribute = variableDecodingAttributes.getAttribute(macro: StringToDouble.self)?.attribute {
@@ -193,6 +206,41 @@ struct DecodeVariableBuild {
      
         let elseIfBuilder = IfExprSyntaxBuilder(
             condition: "if let \(conditionalName) = try? container.decode(Int.self, forKey: .\(varName))",
+            body: elseIfBody,
+            elseBody: elseBody
+        )
+        let elseIfCode = CodeBlockItemSyntaxBuilder.init(otherBuilder: elseIfBuilder)
+        
+        let ifBuilder = IfExprSyntaxBuilder(
+            condition: "if let \(conditionalName) = try? container.decode(String.self, forKey: .\(varName))",
+            body: ifBody,
+            elseBody: [elseIfCode]
+        )
+        
+        return .init(otherBuilder: ifBuilder)
+    }
+    
+    func buildStringOrDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
+        guard type == "String" else {
+            return buildBasicDecode()
+        }
+        
+        let conditionalName = "tmp"+varName.capitalized
+        
+        let ifBody: [CodeBlockItemSyntaxBuilder] = [
+            .init(code: "\(varName) = \(conditionalName)")
+        ]
+        
+        let elseIfBody: [CodeBlockItemSyntaxBuilder] = [
+            .init(code: "\(varName) = String(\(conditionalName))")
+        ]
+        
+        let elseBody: [CodeBlockItemSyntaxBuilder] = [
+            .init(code: "\(varName) = nil")
+        ]
+        
+        let elseIfBuilder = IfExprSyntaxBuilder(
+            condition: "if let \(conditionalName) = try? container.decode(Double.self, forKey: .\(varName))",
             body: elseIfBody,
             elseBody: elseBody
         )

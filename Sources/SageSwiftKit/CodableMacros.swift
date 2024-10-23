@@ -21,6 +21,9 @@ public macro CustomCodable(nestedProperty: String? = nil) = #externalMacro(modul
 public macro StringOrInt() = #externalMacro(module: "SageSwiftKitMacros", type: "StringOrInt")
 
 @attached(peer)
+public macro StringOrDouble() = #externalMacro(module: "SageSwiftKitMacros", type: "StringOrDouble")
+
+@attached(peer)
 public macro StringToDouble() = #externalMacro(module: "SageSwiftKitMacros", type: "StringToDouble")
 
 @attached(peer)

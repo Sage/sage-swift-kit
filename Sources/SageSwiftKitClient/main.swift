@@ -22,6 +22,9 @@ struct PlayingObject {
 
     @StringOrInt
     var value: String?
+    
+    @StringOrDouble
+    var sum: String?
 
     @CustomURL
     var createdOn: URL?

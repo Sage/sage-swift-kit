@@ -16,6 +16,7 @@ struct CobableMacros: CompilerPlugin {
         CustomDate.self,
         CustomURL.self,
         StringOrInt.self,
+        StringOrDouble.self,
         StringToDouble.self
     ]
 }
