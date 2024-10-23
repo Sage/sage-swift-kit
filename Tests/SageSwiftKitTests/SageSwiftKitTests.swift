@@ -19,6 +19,7 @@ let codableMacros: [String: Macro.Type] = [
     "CustomDate": CustomDate.self,
     "CustomURL": CustomURL.self,
     "StringOrInt": StringOrInt.self,
+    "StringOrDouble": StringOrDouble.self,
     "StringToDouble": StringToDouble.self
 ]
 
