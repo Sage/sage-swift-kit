@@ -186,7 +186,7 @@ struct DecodeVariableBuild {
     }
     
     func buildStringOrInt(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
-        guard type == "String" else {
+        guard type == "String?" else {
             return buildBasicDecode()
         }
           
@@ -221,7 +221,7 @@ struct DecodeVariableBuild {
     }
     
     func buildStringOrDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
-        guard type == "String" else {
+        guard type == "String?" else {
             return buildBasicDecode()
         }
         
