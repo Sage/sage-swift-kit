@@ -136,12 +136,12 @@ final class CustomDecodableTests: XCTestCase {
     @CustomCodable
     struct PlayingObject {
         @StringOrInt
-        var value: String
+        var value: String?
     }
     """,
     expandedSource: """
     struct PlayingObject {
-        var value: String
+        var value: String?
     
         enum CodingKeys: String, CodingKey {
             case value
@@ -180,12 +180,12 @@ final class CustomDecodableTests: XCTestCase {
     @CustomCodable
     struct PlayingObject {
         @StringOrDouble
-        var value: String
+        var value: String?
     }
     """,
     expandedSource: """
     struct PlayingObject {
-        var value: String
+        var value: String?
     
         enum CodingKeys: String, CodingKey {
             case value
