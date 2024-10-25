@@ -28,6 +28,5 @@ public macro CustomHashable(parameters: [String]) = #externalMacro(module: "Sage
 @attached(extension, conformances: Equatable, names: arbitrary)
 public macro CustomEquatable(parameters: [String]) = #externalMacro(module: "SageSwiftKitMacros", type: "CustomEquatable")
 
-
 @attached(member, names: arbitrary)
 public macro NodePrinter() = #externalMacro(module: "SageSwiftKitMacros", type: "NodePrinter")

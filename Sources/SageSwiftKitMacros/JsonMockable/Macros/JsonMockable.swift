@@ -59,9 +59,7 @@ public enum JsonMockable: MemberMacro {
         )
         
         declSyntax.append(DeclSyntax(function))
-        
-        
-        
+                
         let variable = try VariableDeclSyntax(
             "public static var jsonMock: \(name.tokenSyntax)") {
                 try .init(itemsBuilder: {
