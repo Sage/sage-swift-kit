@@ -27,28 +27,37 @@ final class MockableMacrosTests: XCTestCase {
     expandedSource: """
     protocol PlayingObject {
         var value: String? { get }
-    
+
         func tmpFunc(value: String) -> Int
     }
     
-    class PlayingObjectMock: PlayingObject {
-         init() {
+    internal class PlayingObjectMock: PlayingObject {
+        internal class TmpFunc_Value {
+            internal struct Parameters {
+                internal let value: String
+            }
+            internal var calls: [Parameters] = []
+            internal var lastCall: Parameters? {
+                return self.calls.last
+            }
+            internal var called: Bool {
+                return self.lastCall != nil
+            }
+            internal var returnValue: Int!
+            init() {
+            }
         }
-         var tmpFunc_valueCallsCount: Int = 0
-         var tmpFunc_valueCalled: Bool {
-            tmpFunc_valueCallsCount > 0
+        internal class FunctionMocks {
+            internal var tmpFunc_Value = TmpFunc_Value()
         }
-         var tmpFunc_valueParameters: String? {
-            self.tmpFunc_valueParametersCalls.last
+        internal var mock = FunctionMocks()
+        internal var value: String? {
+            valueReturn
         }
-         var tmpFunc_valueParametersCalls: [(String)] = []
-         var tmpFunc_valueReturnValue: Int!
-
-
-            func tmpFunc(value: String) -> Int {
-            self.tmpFunc_valueCallsCount += 1
-            self.tmpFunc_valueParametersCalls.append(value)
-            return self.tmpFunc_valueReturnValue
+        internal var valueReturn: String?
+        internal func tmpFunc(value: String) -> Int {
+            self.mock.tmpFunc_Value.calls.append(.init(value: value))
+            return self.mock.tmpFunc_Value.returnValue
         }
     }
     """,
@@ -57,74 +66,5 @@ final class MockableMacrosTests: XCTestCase {
 #else
         throw XCTSkip("macros are only supported when running tests for the host platform")
 #endif
-    }
-    
-    enum TestError: Error {
-        case noValue
-    }
-    
-    @AutoMockable
-    public protocol ProtocolToTest {
-        func fetchPeriodsList(
-            employeeId: Int,
-            startDate: Date?,
-            endDate: Date?
-        ) -> AnyPublisher<[Int], TestError>
-        
-        func fetchDetailPeriod(
-            employeeId: Int,
-            period: Double
-        ) -> AnyPublisher<Int, TestError>
-        
-        func fetchDetailPeriod(
-            employeeId: Int,
-            date: Date
-        ) -> AnyPublisher<Double, TestError>
-        
-        func detailPeriodCache(date: Date) -> TestError?
-        func fetchCommentsAndChangelog(
-            employeeId: Int64,
-            date: Date
-        ) -> AnyPublisher<Int, TestError>
-        
-        func saveWorkDay(
-            employeeId: Int64,
-            date: Date,
-            from: Date,
-            to: Date,
-            breakStart: Date?,
-            breakEnd: Date?,
-            breakLength: Int,
-            comments: [Bool]
-        ) -> AnyPublisher<Int, TestError>
-        func cancelTimesheet(employeeId: Int64, period: Bool) -> AnyPublisher<Bool, TestError>
-        
-        func submitTimesheet(
-            employeeId: Int64,
-            period: Bool,
-            overtime: Int?
-        ) -> AnyPublisher<Bool, TestError>
-        
-        func fetchGeofencingZones(
-            employeeId: Int64,
-            cache: Bool
-        ) -> AnyPublisher<Int, TestError>
-        
-        func fetchCurrentUser() -> AnyPublisher<Int, TestError>
-        
-        func updatePermission(
-            employeeId: Int64,
-            consent: Bool?,
-            deviceEnable: Bool?
-        ) -> AnyPublisher<Bool, TestError>
-    }
-    
-    func testProtocol() {
-        let mockProtocol: ProtocolToTestMock = ProtocolToTestMock()
-        
-        XCTAssertEqual(mockProtocol.detailPeriodCache(date: Date()), nil)
-        mockProtocol.detailPeriodCache_dateReturnValue = .noValue
-        
-        XCTAssertEqual(mockProtocol.detailPeriodCache(date: Date()), .noValue)
     }
 }

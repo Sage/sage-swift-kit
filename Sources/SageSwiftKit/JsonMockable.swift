@@ -4,7 +4,6 @@
 
 import Foundation
 
-
 @attached(member, names: arbitrary)
 public macro JsonMockable(
     keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy,
