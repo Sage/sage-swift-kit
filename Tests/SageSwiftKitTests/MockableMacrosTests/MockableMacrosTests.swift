@@ -32,6 +32,8 @@ final class MockableMacrosTests: XCTestCase {
     }
     
     internal class PlayingObjectMock: PlayingObject {
+        internal init() {
+        }
         internal class TmpFunc_Value {
             internal struct Parameters {
                 internal let value: String

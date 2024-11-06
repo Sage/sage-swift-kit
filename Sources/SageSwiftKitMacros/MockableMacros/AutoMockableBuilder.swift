@@ -64,6 +64,27 @@ public enum AutoMockable: PeerMacro {
                     ),
                     memberBlock: MemberBlockSyntax(
                         members: try MemberBlockItemListSyntax(itemsBuilder: {
+                            // Init
+                            InitializerDeclSyntax(
+                                modifiers: .init(itemsBuilder: {
+                                    DeclModifierSyntax(name: accessLevel.tokenSyntax)
+                                }),
+                                signature: .init(
+                                    parameterClause: .init(
+                                        parameters: .init(
+                                            itemsBuilder: {}
+                                        )
+                                    )
+                                ),
+                                body: .init(
+                                    statements: .init(
+                                        itemsBuilder: {
+                                            
+                                        }
+                                    )
+                                )
+                            )
+                            
                             // Classes that has mock data for each function
                             for funcData in functionsToMock {
                                 ClassMockForFunctionBuilder(funcData: funcData).build()
