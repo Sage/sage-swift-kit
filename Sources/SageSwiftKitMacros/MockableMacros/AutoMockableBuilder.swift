@@ -56,6 +56,10 @@ public enum AutoMockable: PeerMacro {
                                     name: .identifier(procotolName)
                                 )
                             )
+                            
+                            if let inherited = protocolSyntax.inheritanceClause {
+                                inherited.inheritedTypes
+                            }
                         })
                     ),
                     memberBlock: MemberBlockSyntax(

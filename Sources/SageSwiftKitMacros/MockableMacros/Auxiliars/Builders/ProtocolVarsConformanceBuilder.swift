@@ -38,7 +38,7 @@ struct ProtocolVarsConformanceBuilder {
         self.variable = variable
         self.accessLevel = accessLevel
     }
-        
+    
     func build() -> VariableDeclSyntax {
         return VariableDeclSyntax(
             modifiers: .init(itemsBuilder: {
@@ -49,12 +49,29 @@ struct ProtocolVarsConformanceBuilder {
                 .init(
                     pattern: IdentifierPatternSyntax(identifier: name.tokenSyntax),
                     typeAnnotation: variable.bindings.first?.typeAnnotation,
-                    accessorBlock: AccessorBlockSyntax(
-                        accessors: .getter(
-                            .init(itemsBuilder: {
-                                DeclReferenceExprSyntax(baseName: varReturnName.tokenSyntax)
-                            })
-                        )
+                    accessorBlock: .init(accessors:
+                            .accessors(
+                                .init(
+                                    itemsBuilder: {
+                                        AccessorDeclSyntax(
+                                            accessorSpecifier: .keyword(.get),
+                                            bodyBuilder: {
+                                                ReturnStmtSyntax(
+                                                    expression: DeclReferenceExprSyntax(baseName: varReturnName.tokenSyntax)
+                                                )
+                                            }
+                                        )
+                                        
+                                        AccessorDeclSyntax(
+                                            accessorSpecifier: .keyword(.set),
+                                            bodyBuilder: {
+                                                .init(stringLiteral: "self.\(varReturnName) = newValue")
+                                            }
+                                        )
+
+                                    }
+                                )
+                            )
                     )
                 )
             })

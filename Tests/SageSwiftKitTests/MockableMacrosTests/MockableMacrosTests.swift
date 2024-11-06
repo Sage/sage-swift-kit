@@ -52,7 +52,12 @@ final class MockableMacrosTests: XCTestCase {
         }
         internal var mock = FunctionMocks()
         internal var value: String? {
-            valueReturn
+            get {
+                return valueReturn
+            }
+            set {
+                self.valueReturn = newValue
+            }
         }
         internal var valueReturn: String?
         internal func tmpFunc(value: String) -> Int {
