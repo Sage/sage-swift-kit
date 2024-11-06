@@ -35,3 +35,16 @@ struct PlayingObject {
     
     var identifier: Int
 }
+
+
+
+protocol Foo {
+}
+
+protocol FooA {
+}
+
+@AutoMockable()
+protocol Bar: Foo, FooA {
+    var foo: String { set get }
+}
