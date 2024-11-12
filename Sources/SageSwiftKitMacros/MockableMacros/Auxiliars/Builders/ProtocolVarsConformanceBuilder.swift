@@ -24,11 +24,16 @@ struct ProtocolVarsConformanceBuilder {
             return nil
         }
         
-        guard let typeSyntax = myType.type.as(IdentifierTypeSyntax.self) else {
-            return myType
+        if let optional = myType.type.as(OptionalTypeSyntax.self) {
+            return TypeAnnotationSyntax(type: optional)
         }
         
-        return TypeAnnotationSyntax(type: TypeSyntax(stringLiteral: "\(typeSyntax.name.text)!"))
+        return TypeAnnotationSyntax(
+            type: ImplicitlyUnwrappedOptionalTypeSyntax(
+                wrappedType: myType.type.trimmed,
+                exclamationMark: .exclamationMarkToken()
+            )
+        )
     }
     
     init(

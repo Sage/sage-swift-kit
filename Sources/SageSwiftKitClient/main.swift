@@ -37,14 +37,7 @@ struct PlayingObject {
 }
 
 
-
-protocol Foo {
-}
-
-protocol FooA {
-}
-
 @AutoMockable()
-protocol Bar: Foo, FooA {
-    var foo: String { set get }
+public protocol DateSelectorViewModel {
+    func make() throws -> String
 }

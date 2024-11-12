@@ -11,7 +11,7 @@ import SwiftSyntaxBuilder
 struct ClassMockForFunctionBuilder {
     let funcData: FunctionsMockData
     
-    var parametersName: String { "Parameters" }
+    var parametersName: String { "ParametersMock" }
     var callsName: String { "calls" }
     
     init(funcData: FunctionsMockData) {
@@ -47,6 +47,21 @@ struct ClassMockForFunctionBuilder {
                                 name: "returnValue",
                                 type: TypeAnnotationSyntax(
                                     type: TypeSyntax(stringLiteral: returnValue)
+                                )
+                            )
+                        }
+                        
+                        if funcData.needThrows {
+                            VariableDeclSyntax(
+                                modifiers: .init(itemsBuilder: {
+                                    .init(name: funcData.accessLevel)
+                                }),
+                                Keyword.var,
+                                name: "returnError",
+                                type: TypeAnnotationSyntax(
+                                    type: OptionalTypeSyntax(
+                                        wrappedType: IdentifierTypeSyntax(name: "Error")
+                                    )
                                 )
                             )
                         }
