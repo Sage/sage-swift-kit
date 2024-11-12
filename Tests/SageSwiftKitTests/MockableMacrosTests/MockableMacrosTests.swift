@@ -35,11 +35,11 @@ final class MockableMacrosTests: XCTestCase {
         internal init() {
         }
         internal class TmpFunc_Value {
-            internal struct Parameters {
+            internal struct ParametersMock {
                 internal let value: String
             }
-            internal var calls: [Parameters] = []
-            internal var lastCall: Parameters? {
+            internal var calls: [ParametersMock] = []
+            internal var lastCall: ParametersMock? {
                 return self.calls.last
             }
             internal var called: Bool {
@@ -53,6 +53,7 @@ final class MockableMacrosTests: XCTestCase {
             internal var tmpFunc_Value = TmpFunc_Value()
         }
         internal var mock = FunctionMocks()
+        internal var valueReturn: String?
         internal var value: String? {
             get {
                 return valueReturn
@@ -61,7 +62,6 @@ final class MockableMacrosTests: XCTestCase {
                 self.valueReturn = newValue
             }
         }
-        internal var valueReturn: String?
         internal func tmpFunc(value: String) -> Int {
             self.mock.tmpFunc_Value.calls.append(.init(value: value))
             return self.mock.tmpFunc_Value.returnValue

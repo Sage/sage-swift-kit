@@ -29,6 +29,10 @@ struct ProtocolFunctionsConformanceBuilder {
             body: .init(statements: .init(itemsBuilder: {
                 buildCall()
                 
+                if data.needThrows {
+                    buildThrow()
+                }
+                
                 if data.returnValue != nil {
                     buildReturn()
                 }
@@ -63,6 +67,32 @@ struct ProtocolFunctionsConformanceBuilder {
                 ))
             }),
             rightParen: .rightParenToken()
+        )
+    }
+    
+    private func buildThrow() -> CodeBlockItemSyntax {
+        CodeBlockItemSyntax(
+            item: .expr(ExprSyntax(
+                fromProtocol: IfExprSyntax(
+                    conditions: ConditionElementListSyntax(itemsBuilder: {
+                        OptionalBindingConditionSyntax(
+                            bindingSpecifier: .keyword(.let),
+                            pattern: IdentifierPatternSyntax(identifier: "error"),
+                            initializer: InitializerClauseSyntax(
+                                equal: .equalToken(),
+                                value: DeclReferenceExprSyntax(
+                                    baseName: "\(mockEntity).returnError".tokenSyntax
+                                )
+                            )
+                        )
+                    }),
+                    body: CodeBlockSyntax(
+                        statements: .init(itemsBuilder: {
+                            ThrowStmtSyntax(expression: DeclReferenceExprSyntax(baseName: "error"))
+                        })
+                    )
+                )
+            ))
         )
     }
     

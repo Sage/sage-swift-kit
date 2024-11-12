@@ -109,8 +109,8 @@ public enum AutoMockable: PeerMacro {
                                     accessLevel: accessLevel.tokenSyntax
                                 )
                                 
-                                varConformance.build()
                                 varConformance.buildReturnVar()
+                                varConformance.build()
                             }
                             
                             // Implementation of each function

@@ -33,6 +33,8 @@ struct FunctionsMockData {
     
     var mocksVarName: String { "mock" }
     
+    var needThrows: Bool { syntax.signature.effectSpecifiers?.throwsSpecifier != nil }
+    
     init(syntax: FunctionDeclSyntax, accessLevel: TokenSyntax) {
         self.syntax = syntax
         self.name = syntax.name
