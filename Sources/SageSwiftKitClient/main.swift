@@ -39,5 +39,7 @@ struct PlayingObject {
 
 @AutoMockable()
 public protocol DateSelectorViewModel {
-    func make() throws -> String
+    var onTap: (String, Int?) -> Void { get set }
+    var onString: String { get set }
+    var onDouble: Double? { get set }
 }

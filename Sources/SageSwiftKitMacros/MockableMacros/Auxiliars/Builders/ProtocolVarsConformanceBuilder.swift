@@ -20,17 +20,33 @@ struct ProtocolVarsConformanceBuilder {
     }
     
     var typeReturnVar: TypeAnnotationSyntax? {
-        guard let myType = variable.bindings.first?.typeAnnotation else {
+        guard let typeAnnotation = variable.bindings.first?.typeAnnotation else {
             return nil
         }
         
-        if let optional = myType.type.as(OptionalTypeSyntax.self) {
-            return TypeAnnotationSyntax(type: optional)
+        let type = typeAnnotation.type
+        
+        if type.as(OptionalTypeSyntax.self) != nil || type.as(ImplicitlyUnwrappedOptionalTypeSyntax.self) != nil {
+            return typeAnnotation
+        }
+        
+        if let funcType = type.as(FunctionTypeSyntax.self) {
+            return TypeAnnotationSyntax(
+                type: ImplicitlyUnwrappedOptionalTypeSyntax(
+                    wrappedType: TupleTypeSyntax(
+                        elements: .init(itemsBuilder: {
+                            TupleTypeElementSyntax(
+                                type: funcType.trimmed
+                            )
+                        })
+                    )
+                )
+            )
         }
         
         return TypeAnnotationSyntax(
             type: ImplicitlyUnwrappedOptionalTypeSyntax(
-                wrappedType: myType.type.trimmed,
+                wrappedType: type.trimmed,
                 exclamationMark: .exclamationMarkToken()
             )
         )
