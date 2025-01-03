@@ -25,6 +25,12 @@ public enum AutoMockable: PeerMacro {
             .adapter
             .expression(cast: StringLiteralExprSyntax.self)?.representedLiteralValue ?? "internal"
         
+        let classInheritance = node
+            .adapter
+            .findArgument(id: "classInheritance")?
+            .adapter
+            .expression(cast: BooleanLiteralExprSyntax.self)?.literal.text ?? "false"
+        
         let procotolName = protocolSyntax.name.text
         
         guard let members = declaration.as(ProtocolDeclSyntax.self)?.memberBlock.members else {
@@ -51,39 +57,49 @@ public enum AutoMockable: PeerMacro {
                     name: .identifier("\(procotolName)Mock"),
                     inheritanceClause: .init(
                         inheritedTypes: .init(itemsBuilder: {
+                            if classInheritance == "true" {
+                                if let inherited = protocolSyntax.inheritanceClause {
+                                    inherited.inheritedTypes
+                                }
+                            }
                             InheritedTypeSyntax(
                                 type: IdentifierTypeSyntax(
                                     name: .identifier(procotolName)
                                 )
                             )
                             
-                            if let inherited = protocolSyntax.inheritanceClause {
-                                inherited.inheritedTypes
+                            if classInheritance == "false" {
+                                if let inherited = protocolSyntax.inheritanceClause {
+                                    inherited.inheritedTypes
+                                }
                             }
                         })
                     ),
                     memberBlock: MemberBlockSyntax(
                         members: try MemberBlockItemListSyntax(itemsBuilder: {
                             // Init
-                            InitializerDeclSyntax(
-                                modifiers: .init(itemsBuilder: {
-                                    DeclModifierSyntax(name: accessLevel.tokenSyntax)
-                                }),
-                                signature: .init(
-                                    parameterClause: .init(
-                                        parameters: .init(
-                                            itemsBuilder: {}
+                            
+                            if classInheritance == "false" {
+                                InitializerDeclSyntax(
+                                    modifiers: .init(itemsBuilder: {
+                                        DeclModifierSyntax(name: accessLevel.tokenSyntax)
+                                    }),
+                                    signature: .init(
+                                        parameterClause: .init(
+                                            parameters: .init(
+                                                itemsBuilder: {}
+                                            )
+                                        )
+                                    ),
+                                    body: .init(
+                                        statements: .init(
+                                            itemsBuilder: {
+                                                
+                                            }
                                         )
                                     )
-                                ),
-                                body: .init(
-                                    statements: .init(
-                                        itemsBuilder: {
-                                            
-                                        }
-                                    )
                                 )
-                            )
+                            }
                             
                             // Classes that has mock data for each function
                             for funcData in functionsToMock {
