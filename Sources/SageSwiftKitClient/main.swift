@@ -37,9 +37,21 @@ struct PlayingObject {
 }
 
 
-@AutoMockable()
-public protocol DateSelectorViewModel {
+//@NodePrinter
+public class TmpClass {
+    var a: String
+    var b: String
+    
+    init(a: String, b: String) {
+        self.a = a
+        self.b = b
+    }
+}
+
+@AutoMockable(classInheritance: true)
+public protocol DateSelectorViewModel: TmpClass {
     var onTap: (String, Int?) -> Void { get set }
     var onString: String { get set }
     var onDouble: Double? { get set }
 }
+ 
