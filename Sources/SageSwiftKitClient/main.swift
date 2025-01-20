@@ -11,7 +11,7 @@ struct SubObject: Codable {
 }
 
 @CustomCodable
-struct PlayingObject {
+struct PlayingObject: Codable {
 
     @StringOrInt
     var value: String?
@@ -32,6 +32,9 @@ struct PlayingObject {
     var subobject: SubObject
     
     var attachment: String?
+    
+    @CustomDate(dateFormat: "aa-vv-cc")
+    var customDate: Date?
     
     var identifier: Int
 }

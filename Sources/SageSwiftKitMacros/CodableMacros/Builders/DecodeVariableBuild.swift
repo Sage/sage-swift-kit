@@ -6,61 +6,16 @@ import Foundation
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-enum DecodingAttribute: Identifiable, Equatable {
-    case defaultValue(AttributeSyntax)
-    case date(AttributeSyntax)
-    case url(AttributeSyntax)
-    case stringOrInt(AttributeSyntax)
-    case stringOrDouble(AttributeSyntax)
-    case stringToDouble(AttributeSyntax)
-    
-    var id: String {
-        switch self {
-        case .defaultValue:
-            return String(describing: CustomDefault.self)
-        case .date:
-            return String(describing: CustomDate.self)
-        case .url:
-            return String(describing: CustomURL.self)
-        case .stringOrInt:
-            return String(describing: StringOrInt.self)
-        case .stringOrDouble:
-            return String(describing: StringOrDouble.self)
-        case .stringToDouble:
-            return String(describing: StringToDouble.self)
-        }
-    }
-    
-    var attribute: AttributeSyntax {
-        switch self {
-        case .defaultValue(let attributeSyntax):
-            return attributeSyntax
-        case .date(let attributeSyntax):
-            return attributeSyntax
-        case .url(let attributeSyntax):
-            return attributeSyntax
-        case .stringOrInt(let attributeSyntax):
-            return attributeSyntax
-        case .stringOrDouble(let attributeSyntax):
-            return attributeSyntax
-        case .stringToDouble(let attributeSyntax):
-            return attributeSyntax
-        }
-    }
-}
-
-extension Array where Element == DecodingAttribute {
-    func getAttribute(macro: PeerMacro.Type) -> DecodingAttribute? {
-        self.first(where: { $0.id == String(describing: macro) })
-    }
-}
-
 struct DecodeVariableBuild {
     let variable: VariableDeclSyntax
+    let dateFormatter: String
     
-    init(variable: VariableDeclSyntax) {
+    init(variable: VariableDeclSyntax, dateFormatter: String) {
         self.variable = variable
+        self.dateFormatter = dateFormatter
     }
+    
+    private var adapter: VariableDeclSyntaxAdapter { variable.adapter }
     
     private var varName: String {
         variable.adapter.identifier.text
@@ -74,58 +29,28 @@ struct DecodeVariableBuild {
         variable.adapter.typeAnnotation.type.kind
     }
     
-    private var variableDecodingAttributes: [DecodingAttribute] {
-        variable.adapter.attributes.compactMap { variableAttribute -> DecodingAttribute? in
-            if variableAttribute.adapter.name == String(describing: CustomDefault.self) {
-                return .defaultValue(variableAttribute)
-            }
-            
-            if variableAttribute.adapter.name == String(describing: CustomDate.self) {
-                return .date(variableAttribute)
-            }
-            
-            if variableAttribute.adapter.name == String(describing: CustomURL.self) {
-                return .url(variableAttribute)
-            }
-            
-            if variableAttribute.adapter.name == String(describing: StringOrInt.self) {
-                return .stringOrInt(variableAttribute)
-            }
-            
-            if variableAttribute.adapter.name == String(describing: StringOrDouble.self) {
-                return .stringOrDouble(variableAttribute)
-            }
-            
-            if variableAttribute.adapter.name == String(describing: StringToDouble.self) {
-                return .stringToDouble(variableAttribute)
-            }
-            
-            return nil
-        }
-    }
-    
     func build() -> CodeBlockItemSyntaxBuilder {
-        if let attribute = variableDecodingAttributes.getAttribute(macro: CustomDate.self)?.attribute {
+        if let attribute = adapter.getAttributeFor(macro: .customDate) {
             return buildCustomDate(attribute: attribute)
         }
         
-        if let attribute = variableDecodingAttributes.getAttribute(macro: CustomDefault.self)?.attribute {
+        if let attribute = adapter.getAttributeFor(macro: .customDefault) {
             return buildCustomDefault(attribute: attribute)
         }
         
-        if let attribute = variableDecodingAttributes.getAttribute(macro: CustomURL.self)?.attribute {
+        if let attribute = adapter.getAttributeFor(macro: .customURL) {
             return buildCustomURL(attribute: attribute)
         }
 
-        if let attribute = variableDecodingAttributes.getAttribute(macro: StringOrInt.self)?.attribute {
+        if let attribute = adapter.getAttributeFor(macro: .stringOrInt) {
             return buildStringOrInt(attribute: attribute)
         }
         
-        if let attribute = variableDecodingAttributes.getAttribute(macro: StringOrDouble.self)?.attribute {
+        if let attribute = adapter.getAttributeFor(macro: .stringOrDouble) {
             return buildStringOrDouble(attribute: attribute)
         }
         
-        if let attribute = variableDecodingAttributes.getAttribute(macro: StringToDouble.self)?.attribute {
+        if let attribute = adapter.getAttributeFor(macro: .stringToDouble) {
             return buildStringToDouble(attribute: attribute)
         }
         
@@ -135,8 +60,8 @@ struct DecodeVariableBuild {
     func buildBasicDecode() -> CodeBlockItemSyntaxBuilder {
         let optional = kind == .optionalType
         return optional ?
-            .init(code: "self.\(varName) = try container.decodeIfPresent(\(type.dropLast()).self, forKey: .\(varName))") :
-            .init(code: "self.\(varName) = try container.decode(\(type).self, forKey: .\(varName))")
+            .code("self.\(varName) = try container.decodeIfPresent(\(type.dropLast()).self, forKey: .\(varName))") :
+            .code("self.\(varName) = try container.decode(\(type).self, forKey: .\(varName))")
     }
     
     func buildCustomDate(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
@@ -148,22 +73,18 @@ struct DecodeVariableBuild {
         
         var elseBody: [CodeBlockItemSyntaxBuilder]?
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        
         var body: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "let dateFormatter = DateFormatter()"),
-            .init(code: "dateFormatter.dateFormat = \(dateFormat.expression.description)"),
-            .init(code: "let date = dateFormatter.date(from: \(conditionalName))")
+            .code("\(dateFormatter).dateFormat = \(dateFormat.expression.description)"),
+            .code("let date = \(dateFormatter).date(from: \(conditionalName))")
         ]
         
         if let defaultValue {
-            body.append(.init(code: "self.\(varName) = date ?? \(defaultValue.expression.description)"))
+            body.append(.code("self.\(varName) = date ?? \(defaultValue.expression.description)"))
             elseBody = [
-                .init(code: "self.\(varName) = \(defaultValue.expression.description)")
+                .code("self.\(varName) = \(defaultValue.expression.description)")
             ]
         } else {
-            body.append(.init(code: "self.\(varName) = date"))
+            body.append(.code("self.\(varName) = date"))
         }
         
         let ifBuilder = IfExprSyntaxBuilder(
@@ -172,7 +93,7 @@ struct DecodeVariableBuild {
             elseBody: elseBody
         )
         
-        return .init(otherBuilder: ifBuilder)
+        return .builder(ifBuilder)
     }
     
     func buildCustomDefault(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
@@ -182,7 +103,7 @@ struct DecodeVariableBuild {
         
         let value: String = defaultValue.expression.description
         
-        return .init(code: "self.\(varName) = try container.decodeIfPresent(\(type).self, forKey: .\(varName)) ?? \(value)")
+        return .code("self.\(varName) = try container.decodeIfPresent(\(type).self, forKey: .\(varName)) ?? \(value)")
     }
     
     func buildStringOrInt(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
@@ -193,15 +114,15 @@ struct DecodeVariableBuild {
         let conditionalName = "tmp"+varName.capitalized
         
         let ifBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = \(conditionalName)")
+            .code("\(varName) = \(conditionalName)")
         ]
         
         let elseIfBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = String(\(conditionalName))")
+            .code("\(varName) = String(\(conditionalName))")
         ]
         
         let elseBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = nil")
+            .code("\(varName) = nil")
         ]
      
         let elseIfBuilder = IfExprSyntaxBuilder(
@@ -209,7 +130,7 @@ struct DecodeVariableBuild {
             body: elseIfBody,
             elseBody: elseBody
         )
-        let elseIfCode = CodeBlockItemSyntaxBuilder.init(otherBuilder: elseIfBuilder)
+        let elseIfCode = CodeBlockItemSyntaxBuilder.builder( elseIfBuilder)
         
         let ifBuilder = IfExprSyntaxBuilder(
             condition: "if let \(conditionalName) = try? container.decode(String.self, forKey: .\(varName))",
@@ -217,7 +138,7 @@ struct DecodeVariableBuild {
             elseBody: [elseIfCode]
         )
         
-        return .init(otherBuilder: ifBuilder)
+        return .builder( ifBuilder)
     }
     
     func buildStringOrDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
@@ -228,15 +149,15 @@ struct DecodeVariableBuild {
         let conditionalName = "tmp"+varName.capitalized
         
         let ifBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = \(conditionalName)")
+            .code("\(varName) = \(conditionalName)")
         ]
         
         let elseIfBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = String(\(conditionalName))")
+            .code("\(varName) = String(\(conditionalName))")
         ]
         
         let elseBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = nil")
+            .code("\(varName) = nil")
         ]
         
         let elseIfBuilder = IfExprSyntaxBuilder(
@@ -244,7 +165,7 @@ struct DecodeVariableBuild {
             body: elseIfBody,
             elseBody: elseBody
         )
-        let elseIfCode = CodeBlockItemSyntaxBuilder.init(otherBuilder: elseIfBuilder)
+        let elseIfCode = CodeBlockItemSyntaxBuilder.builder( elseIfBuilder)
         
         let ifBuilder = IfExprSyntaxBuilder(
             condition: "if let \(conditionalName) = try? container.decode(String.self, forKey: .\(varName))",
@@ -252,7 +173,7 @@ struct DecodeVariableBuild {
             elseBody: [elseIfCode]
         )
         
-        return .init(otherBuilder: ifBuilder)
+        return .builder( ifBuilder)
     }
     
     func buildStringToDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
@@ -264,11 +185,11 @@ struct DecodeVariableBuild {
         let conditionalName = "tmp"+varName.capitalized
         
         let ifBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = Double(\(conditionalName)) ?? 0")
+            .code("\(varName) = Double(\(conditionalName)) ?? 0")
         ]
         
         let elseBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "\(varName) = 0")
+            .code("\(varName) = 0")
         ]
         
         let ifBuilder = IfExprSyntaxBuilder(
@@ -277,17 +198,17 @@ struct DecodeVariableBuild {
             elseBody: elseBody
         )
         
-        return .init(otherBuilder: ifBuilder)
+        return .builder( ifBuilder)
     }
     
     func buildCustomURL(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
                 
         let body: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "self.\(varName) = URL(string: urlString)")
+            .code("self.\(varName) = URL(string: urlString)")
         ]
         
         let elseBody: [CodeBlockItemSyntaxBuilder] = [
-            .init(code: "self.\(varName) = nil")
+            .code("self.\(varName) = nil")
         ]
         
         let ifBuilder = IfExprSyntaxBuilder(
@@ -296,6 +217,6 @@ struct DecodeVariableBuild {
             elseBody: elseBody
         )
         
-        return .init(otherBuilder: ifBuilder)
+        return .builder( ifBuilder)
     }
 }

@@ -20,8 +20,8 @@ public enum CustomEquatable: ExtensionMacro {
             stringLiteral: "extension \(type.trimmed): Equatable"
         )
         
-        let params = CodeBlockItemSyntaxBuilder(
-            code: prepareParams(
+        let params = CodeBlockItemSyntaxBuilder.code(
+            prepareParams(
                 node: node,
                 members: declaration.memberBlock.members
             )
