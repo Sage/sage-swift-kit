@@ -6,20 +6,23 @@ import Foundation
 import SwiftSyntax
 import SwiftSyntaxBuilder
 
-struct DecoderInitBuilder {
+struct DecoderBuilder {
     let syntaxBuilder: InitializerDeclSyntaxBuilder
     let nestedKey: String?
     let vars: [VariableDeclSyntax]
+    let dateFormatter: String
     
     init(
         nestedKey: String?,
-        vars: [VariableDeclSyntax]
+        vars: [VariableDeclSyntax],
+        dateFormatter: String
     ) {
         self.nestedKey = nestedKey
         self.vars = vars
         self.syntaxBuilder = .init(
             declaration: "public init(from decoder: any Decoder) throws"
         )
+        self.dateFormatter = dateFormatter
     }
     
     func build() throws -> DeclSyntax {
@@ -29,8 +32,17 @@ struct DecoderInitBuilder {
         
         syntaxBuilder.addItem(item: container)
         
+        syntaxBuilder.addItem(
+            item: CodeBlockItemSyntaxBuilder.code( "let \(dateFormatter) = DateFormatter()")
+        )
+        
         for variable in vars {
-            syntaxBuilder.addItem(item: DecodeVariableBuild(variable: variable).build())
+            syntaxBuilder.addItem(
+                item: DecodeVariableBuild(
+                    variable: variable,
+                    dateFormatter: dateFormatter
+                ).build()
+            )
         }
         
         return DeclSyntax(try syntaxBuilder.build())
@@ -39,14 +51,14 @@ struct DecoderInitBuilder {
     var nestedContainer: CodeBlockItemSyntaxBuilder? {
         if nestedKey == nil { return nil }
         
-        return .init(code: "let nestedContainer = try decoder.container(keyedBy: NestedCodingKeys.self)")
+        return .code("let nestedContainer = try decoder.container(keyedBy: NestedCodingKeys.self)")
     }
     
     var container: CodeBlockItemSyntaxBuilder {
         if let nestedKey {
-            return .init(code: "let container = try nestedContainer.nestedContainer(keyedBy: CodingKeys.self, forKey: .\(nestedKey))")
+            return .code("let container = try nestedContainer.nestedContainer(keyedBy: CodingKeys.self, forKey: .\(nestedKey))")
         } else {
-            return .init(code: "let container = try decoder.container(keyedBy: CodingKeys.self)")
+            return .code("let container = try decoder.container(keyedBy: CodingKeys.self)")
         }
     }
 }

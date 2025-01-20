@@ -15,6 +15,8 @@ public enum CustomCodable: MemberMacro {
     ) throws -> [DeclSyntax] {
         var syntax: [DeclSyntax] = []
         
+        let dateFormatterName = "dateFormatter"
+        
         let nestedKey = node
             .adapter
             .findArgument(id: "nestedProperty")?
@@ -28,13 +30,15 @@ public enum CustomCodable: MemberMacro {
             variables: variables
         )
         
-        let decoderInitBuilder = DecoderInitBuilder(
+        let decoderBuilder = DecoderBuilder(
             nestedKey: nestedKey,
-            vars: variables
+            vars: variables,
+            dateFormatter: dateFormatterName
         )
         
-        let encoderInitBuilder = EncoderInitBuilder(
-            vars: variables
+        let encoderInitBuilder = EncoderBuilder(
+            vars: variables,
+            dateFormatter: dateFormatterName
         )
         
         if let nestedKeys = try? codingKeysBuilder.buildNestedCodingKeys()?.build() {
@@ -46,8 +50,8 @@ public enum CustomCodable: MemberMacro {
         }
         
         do {
-            let initDecoder = try decoderInitBuilder.build()
-            syntax.append(DeclSyntax(initDecoder))
+            let decoder = try decoderBuilder.build()
+            syntax.append(DeclSyntax(decoder))
             let initEncoder = try encoderInitBuilder.build()
             syntax.append(DeclSyntax(initEncoder))
         } catch {
