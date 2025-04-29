@@ -29,6 +29,10 @@ struct EncodeVariableBuild {
             return buildCustomDate(attribute: attribute)
         }
         
+        if let attribute = adapter.getAttributeFor(macro: .stringToDouble) {
+            return buildStringToDouble(attribute: attribute)
+        }
+        
         return buildBasicDecode()
     }
     
@@ -56,6 +60,23 @@ struct EncodeVariableBuild {
             return .init()
                 .addLine(dateFormSetted(format: dateFormat.expression.description))
                 .addLine(buildDateEncode())
+        }
+    }
+    
+    func buildStringToDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
+        if adapter.typeAnnotation.type.kind == .optionalType {
+            let ifExpr = IfExprSyntaxBuilder(
+                condition: "if let \(varName)",
+                body: [
+                    .init()
+                    .addLine("try container.encode(String(\(varName)), forKey: .\(varName))")
+                ]
+            )
+            
+            return .init().setBuilder(ifExpr)
+        } else {
+            return .init()
+                .addLine("try container.encode(String(\(varName)), forKey: .\(varName))")
         }
     }
     
