@@ -165,7 +165,7 @@ struct DecodeVariableBuild {
             body: elseIfBody,
             elseBody: elseBody
         )
-        let elseIfCode = CodeBlockItemSyntaxBuilder.builder( elseIfBuilder)
+        let elseIfCode = CodeBlockItemSyntaxBuilder.builder(elseIfBuilder)
         
         let ifBuilder = IfExprSyntaxBuilder(
             condition: "if let \(conditionalName) = try? container.decode(String.self, forKey: .\(varName))",
@@ -177,19 +177,20 @@ struct DecodeVariableBuild {
     }
     
     func buildStringToDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
-        
-        guard type == "Double" else {
+        guard type == "Double" || type == "Double?" else {
             return buildBasicDecode()
         }
+        
+        let valueIfNotFound = type == "Double" ? "0" : "nil"
         
         let conditionalName = "tmp"+varName.capitalized
         
         let ifBody: [CodeBlockItemSyntaxBuilder] = [
-            .code("\(varName) = Double(\(conditionalName)) ?? 0")
+            .code("\(varName) = Double(\(conditionalName)) ?? \(valueIfNotFound)")
         ]
         
         let elseBody: [CodeBlockItemSyntaxBuilder] = [
-            .code("\(varName) = 0")
+            .code("\(varName) = \(valueIfNotFound)")
         ]
         
         let ifBuilder = IfExprSyntaxBuilder(
