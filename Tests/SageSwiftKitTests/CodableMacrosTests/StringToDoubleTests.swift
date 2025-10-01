@@ -29,7 +29,6 @@ final class StringToDoubleTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             if let tmpValue = try? container.decode(String.self, forKey: .value) {
                 value = Double(tmpValue) ?? nil
             } else {
@@ -39,7 +38,6 @@ final class StringToDoubleTests: XCTestCase {
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             if let value {
                 try container.encode(String(value), forKey: .value)
             } else {
@@ -73,7 +71,6 @@ final class StringToDoubleTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             if let tmpValue = try? container.decode(String.self, forKey: .value) {
                 value = Double(tmpValue) ?? 0
             } else {
@@ -83,7 +80,6 @@ final class StringToDoubleTests: XCTestCase {
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(String(value), forKey: .value)
         }
     }

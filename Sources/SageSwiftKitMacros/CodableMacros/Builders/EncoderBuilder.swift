@@ -9,10 +9,12 @@ import SwiftSyntaxBuilder
 struct EncoderBuilder {
     let syntaxBuilder: FunctionDeclSyntaxBuilder
     let vars: [VariableDeclSyntax]
+    let hasCustomDate: Bool
     let dateFormatter: String
     
     init(
         vars: [VariableDeclSyntax],
+        hasCustomDate: Bool,
         dateFormatter: String
     ) {
         self.vars = vars
@@ -20,15 +22,18 @@ struct EncoderBuilder {
             declaration: "public func encode(to encoder: Encoder) throws"
         )
         self.dateFormatter = dateFormatter
+        self.hasCustomDate = hasCustomDate
     }
     
     func build() throws -> DeclSyntax {
         
         syntaxBuilder.addItem(item: container)
         
-        syntaxBuilder.addItem(
-            item: CodeBlockItemSyntaxBuilder.code("let \(dateFormatter) = DateFormatter()")
-        )
+        if hasCustomDate {
+            syntaxBuilder.addItem(
+                item: CodeBlockItemSyntaxBuilder.code("let \(dateFormatter) = DateFormatter()")
+            )
+        }
         
         for variable in vars {
             syntaxBuilder.addItem(

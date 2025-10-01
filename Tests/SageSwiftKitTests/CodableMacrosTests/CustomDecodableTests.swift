@@ -30,13 +30,11 @@ final class CustomDecodableTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             self.value = try container.decodeIfPresent(String.self, forKey: .value) ?? "default_value"
         }
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(value, forKey: .value)
         }
     }
@@ -54,21 +52,25 @@ final class CustomDecodableTests: XCTestCase {
     """
     @CustomCodable
     struct PlayingObject {
+        var valueA: String
         @CustomDate(dateFormat: "yyyy-mm-dd", defaultValue: Date())
         var value: Date
     }
     """,
     expandedSource: """
     struct PlayingObject {
+        var valueA: String
         var value: Date
     
         enum CodingKeys: String, CodingKey {
+            case valueA
             case value
         }
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             let dateFormatter = DateFormatter()
+            self.valueA = try container.decode(String.self, forKey: .valueA)
             if let tmpValue = try? container.decode(String.self, forKey: .value) {
                 dateFormatter.dateFormat = "yyyy-mm-dd"
                 let date = dateFormatter.date(from: tmpValue)
@@ -81,6 +83,7 @@ final class CustomDecodableTests: XCTestCase {
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             let dateFormatter = DateFormatter()
+            try container.encode(valueA, forKey: .valueA)
             dateFormatter.dateFormat = "yyyy-mm-dd"
             try container.encode(dateFormatter.string(from: value), forKey: .value)
         }
@@ -160,7 +163,6 @@ final class CustomDecodableTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             if let urlString = try container.decodeIfPresent(String.self, forKey: .value) {
                 self.value = URL(string: urlString)
             } else {
@@ -170,7 +172,6 @@ final class CustomDecodableTests: XCTestCase {
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(value, forKey: .value)
         }
     }
@@ -202,7 +203,6 @@ final class CustomDecodableTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             if let tmpValue = try? container.decode(String.self, forKey: .value) {
                 value = tmpValue
             } else {
@@ -216,7 +216,6 @@ final class CustomDecodableTests: XCTestCase {
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(value, forKey: .value)
         }
     }
@@ -248,7 +247,6 @@ final class CustomDecodableTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             if let tmpValue = try? container.decode(String.self, forKey: .value) {
                 value = tmpValue
             } else {
@@ -262,7 +260,6 @@ final class CustomDecodableTests: XCTestCase {
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(value, forKey: .value)
         }
     }

@@ -11,11 +11,13 @@ struct DecoderBuilder {
     let nestedKey: String?
     let vars: [VariableDeclSyntax]
     let dateFormatter: String
+    let hasCustomDate: Bool
     
     init(
         nestedKey: String?,
         vars: [VariableDeclSyntax],
-        dateFormatter: String
+        dateFormatter: String,
+        hasCustomDate: Bool
     ) {
         self.nestedKey = nestedKey
         self.vars = vars
@@ -23,6 +25,7 @@ struct DecoderBuilder {
             declaration: "public init(from decoder: any Decoder) throws"
         )
         self.dateFormatter = dateFormatter
+        self.hasCustomDate = hasCustomDate
     }
     
     func build() throws -> DeclSyntax {
@@ -32,9 +35,11 @@ struct DecoderBuilder {
         
         syntaxBuilder.addItem(item: container)
         
-        syntaxBuilder.addItem(
-            item: CodeBlockItemSyntaxBuilder.code( "let \(dateFormatter) = DateFormatter()")
-        )
+        if hasCustomDate {
+            syntaxBuilder.addItem(
+                item: CodeBlockItemSyntaxBuilder.code( "let \(dateFormatter) = DateFormatter()")
+            )
+        }
         
         for variable in vars {
             syntaxBuilder.addItem(
