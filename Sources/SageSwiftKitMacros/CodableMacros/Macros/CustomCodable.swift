@@ -15,7 +15,7 @@ public enum CustomCodable: MemberMacro {
     ) throws -> [DeclSyntax] {
         var syntax: [DeclSyntax] = []
         
-        let dateFormatterName = "dateFormatter"
+        let dateFormatterName: String = "dateFormatter"
         
         let nestedKey = node
             .adapter
@@ -33,11 +33,13 @@ public enum CustomCodable: MemberMacro {
         let decoderBuilder = DecoderBuilder(
             nestedKey: nestedKey,
             vars: variables,
-            dateFormatter: dateFormatterName
+            dateFormatter: dateFormatterName,
+            hasCustomDate: hasCustomDate(vars: variables)
         )
         
         let encoderInitBuilder = EncoderBuilder(
             vars: variables,
+            hasCustomDate: hasCustomDate(vars: variables),
             dateFormatter: dateFormatterName
         )
         
@@ -59,5 +61,21 @@ public enum CustomCodable: MemberMacro {
         }
         
         return syntax
+    }
+    
+    static func hasCustomDate(vars: [VariableDeclSyntax]) -> Bool {
+        vars.first(where: { variable -> Bool in
+            let casted = variable.attributes.compactMap { $0.as(AttributeSyntax.self) }
+            
+            for att in casted {
+                let name = att.attributeName.as(IdentifierTypeSyntax.self)
+                
+                if name?.name.text == CodingMacro.customDate.id {
+                    return true
+                }
+            }
+            
+            return false
+        }) != nil
     }
 }

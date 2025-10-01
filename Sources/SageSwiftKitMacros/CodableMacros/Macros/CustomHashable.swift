@@ -57,9 +57,6 @@ public enum CustomHashable: ExtensionMacro {
         
         guard let parameters = parameters else { return [] }
         
-        var stringValue = """
-        """
-        
         let names: [String] = members.compactMap { member -> String? in
             guard let casted = member.decl.as(VariableDeclSyntax.self) else {
                 return nil

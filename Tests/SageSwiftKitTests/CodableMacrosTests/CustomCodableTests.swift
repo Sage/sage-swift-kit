@@ -29,13 +29,11 @@ final class CustomCodableTests: XCTestCase {
     
         public init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             self.value = try container.decodeIfPresent(String.self, forKey: .value)
         }
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(value, forKey: .value)
         }
     }
@@ -71,13 +69,11 @@ final class CustomCodableTests: XCTestCase {
         public init(from decoder: any Decoder) throws {
             let nestedContainer = try decoder.container(keyedBy: NestedCodingKeys.self)
             let container = try nestedContainer.nestedContainer(keyedBy: CodingKeys.self, forKey: .nested_Key)
-            let dateFormatter = DateFormatter()
             self.value = try container.decodeIfPresent(String.self, forKey: .value)
         }
     
         public func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
-            let dateFormatter = DateFormatter()
             try container.encode(value, forKey: .value)
         }
     }
