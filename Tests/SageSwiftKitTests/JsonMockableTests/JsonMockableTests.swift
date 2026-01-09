@@ -20,33 +20,33 @@ final class JsonMockableTests: XCTestCase {
     struct Example {}
     """,
     expandedSource: """
-        
     struct Example {
-    
-        private static func getMock(bundle: Bundle, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy, fileName: String?) throws -> Self {
-            let mockURL = bundle.url(forResource: fileName, withExtension: "json")
-            guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
-                throw NSError(domain: "No data found", code: 500)
+
+            private static func getMock(bundle: Bundle, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy, fileName: String?) throws -> Self {
+                let mockURL = bundle.url(forResource: fileName, withExtension: "json")
+                guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
+                    throw NSError(domain: "No data found", code: 500)
+                }
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = keyDecodingStrategy
+                return try decoder.decode(Example.self, from: data)
             }
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = keyDecodingStrategy
-            return try decoder.decode(Example.self, from: data)
-        }
-    
-        public static var jsonMock: Example {
-            get throws {
-                var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy {
-                    .convertFromSnakeCase
+
+            public static var jsonMock: Example {
+                get throws {
+                    var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy {
+                        .convertFromSnakeCase
+                    }
+                    var bundle: Bundle {
+                        .main
+                    }
+                    var fileName: String {
+                        String(describing: Example.self)
+                    }
+                    return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)
                 }
-                var bundle: Bundle {
-                    .main
-                }
-                var fileName: String {
-                    String(describing: Example.self)
-                }
-                return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)
             }
-        }}
+    }
     """,
     macros: jsonMockableMacros
         )
@@ -68,33 +68,33 @@ final class JsonMockableTests: XCTestCase {
     struct Example {}
     """,
     expandedSource: """
-        
     struct Example {
-    
-        private static func getMock(bundle: Bundle, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy, fileName: String?) throws -> Self {
-            let mockURL = bundle.url(forResource: fileName, withExtension: "json")
-            guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
-                throw NSError(domain: "No data found", code: 500)
+
+            private static func getMock(bundle: Bundle, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy, fileName: String?) throws -> Self {
+                let mockURL = bundle.url(forResource: fileName, withExtension: "json")
+                guard let mockURL, let data = try? Data(contentsOf: mockURL) else {
+                    throw NSError(domain: "No data found", code: 500)
+                }
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = keyDecodingStrategy
+                return try decoder.decode(Example.self, from: data)
             }
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = keyDecodingStrategy
-            return try decoder.decode(Example.self, from: data)
-        }
-    
-        public static var jsonMock: Example {
-            get throws {
-                var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy {
-                    .useDefaultKeys
+
+            public static var jsonMock: Example {
+                get throws {
+                    var keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy {
+                        .useDefaultKeys
+                    }
+                    var bundle: Bundle {
+                        .other
+                    }
+                    var fileName: String {
+                        "customFile"
+                    }
+                    return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)
                 }
-                var bundle: Bundle {
-                    .other
-                }
-                var fileName: String {
-                    "customFile"
-                }
-                return try getMock(bundle: bundle, keyDecodingStrategy: keyDecodingStrategy, fileName: fileName)
             }
-        }}
+    }
     """,
     macros: jsonMockableMacros
         )
