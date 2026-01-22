@@ -31,11 +31,11 @@ final class MockableMacrosTests: XCTestCase {
         func tmpFunc(value: String) -> Int
     }
     
-    internal class PlayingObjectMock: PlayingObject {
+    internal final class PlayingObjectMock: PlayingObject {
         internal init() {
         }
-        internal class TmpFunc_Value {
-            internal struct ParametersMock {
+        internal final class TmpFunc_Value: @unchecked Sendable {
+            internal struct ParametersMock: @unchecked Sendable {
                 internal let value: String
             }
             internal var calls: [ParametersMock] = []
@@ -49,7 +49,7 @@ final class MockableMacrosTests: XCTestCase {
             init() {
             }
         }
-        internal class FunctionMocks {
+        internal final class FunctionMocks: @unchecked Sendable {
             internal var tmpFunc_Value = TmpFunc_Value()
         }
         internal var mock = FunctionMocks()

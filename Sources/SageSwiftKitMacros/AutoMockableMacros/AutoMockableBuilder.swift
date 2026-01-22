@@ -53,6 +53,7 @@ public enum AutoMockable: PeerMacro {
                 ClassDeclSyntax(
                     modifiers: .init(itemsBuilder: {
                         DeclModifierSyntax(name: accessLevel.tokenSyntax)
+                        DeclModifierSyntax(name: .keyword(.final))
                     }),
                     name: .identifier("\(procotolName)Mock"),
                     inheritanceClause: .init(
