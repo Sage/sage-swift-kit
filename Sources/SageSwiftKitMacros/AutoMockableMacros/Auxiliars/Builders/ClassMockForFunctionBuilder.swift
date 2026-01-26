@@ -23,9 +23,19 @@ struct ClassMockForFunctionBuilder {
             modifiers: .init(
                 itemsBuilder: {
                     .init(name: funcData.accessLevel)
+                    DeclModifierSyntax(name: .keyword(.final))
                 }
             ),
             name: funcData.className.tokenSyntax,
+            inheritanceClause: .init(
+                inheritedTypes: .init(itemsBuilder: {
+                    InheritedTypeSyntax(
+                        type: IdentifierTypeSyntax(
+                            name: .identifier("@unchecked Sendable")
+                        )
+                    )
+                })
+            ),
             memberBlock: .init(
                 members: .init(
                     itemsBuilder: {
@@ -87,9 +97,18 @@ extension ClassMockForFunctionBuilder {
     func buildParameters() -> StructDeclSyntax? {
         return StructDeclSyntax(
             modifiers: .init(itemsBuilder: {
-                .init(name: funcData.accessLevel)
+                DeclModifierSyntax(name: funcData.accessLevel)
             }),
             name: parametersName.tokenSyntax,
+            inheritanceClause: .init(
+                inheritedTypes: .init(itemsBuilder: {
+                    InheritedTypeSyntax(
+                        type: IdentifierTypeSyntax(
+                            name: .identifier("@unchecked Sendable")
+                        )
+                    )
+                })
+            ),
             memberBlock: .init(members: .init(itemsBuilder: {
                 for parameter in funcData.params {
                     VariableDeclSyntax(

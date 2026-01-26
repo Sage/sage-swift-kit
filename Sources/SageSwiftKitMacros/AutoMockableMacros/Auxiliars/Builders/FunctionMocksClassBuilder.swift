@@ -22,9 +22,19 @@ struct FunctionMocksClassBuilder {
     func build() -> ClassDeclSyntax {
         .init(
             modifiers: .init(itemsBuilder: {
-                .init(name: accessLevel)
+                DeclModifierSyntax(name: accessLevel)
+                DeclModifierSyntax(name: .keyword(.final))
             }),
             name: "FunctionMocks",
+            inheritanceClause: .init(
+                inheritedTypes: .init(itemsBuilder: {
+                    InheritedTypeSyntax(
+                        type: IdentifierTypeSyntax(
+                            name: .identifier("@unchecked Sendable")
+                        )
+                    )
+                })
+            ),
             memberBlock: .init(
                 members: .init(itemsBuilder: {
                     for function in functions {

@@ -204,3 +204,30 @@ Of course you can combine all of them:
         }
         
         extension Vehicle: Codable {}
+
+## AutoMockable Macro
+
+#### Auto Mockable - @AutoMockable(accessLevel: String, classInheritance: Bool)
+Generates a mock implementation of a protocol, perfect for unit testing. The macro creates a final class that conforms to your protocol.
+
+**Requirements**: The `#if TESTING` condition is used to enable/disable the macro. You need to add the `-DTESTING` compiler flag to your test targets.
+
+**Parameters**:
+- `accessLevel`: The access level for the generated mock class (default: "internal")
+- `classInheritance`: Whether the mock should inherit from the protocol's superclasses (default: false)
+
+##### Example Usage
+
+```swift
+@AutoMockable(accessLevel: "public", classInheritance: false)
+protocol UserService {
+    var userName: String { get }
+    func fetchUser(id: Int) -> User
+    func saveUser(_ user: User) -> Bool
+}
+```
+
+This generates a `UserServiceMock` class that:
+- Conforms to `UserService` protocol
+- Tracks all method calls for assertion in tests
+- Provides mock data for testing
