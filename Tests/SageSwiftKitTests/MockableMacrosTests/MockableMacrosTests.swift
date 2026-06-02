@@ -22,7 +22,7 @@ protocol TestProtocolSendable: Sendable {
 final class MockableMacrosTests: XCTestCase {
     
     func testSendable() {
-        var sut = TestProtocolSendableMock()
+        let sut = TestProtocolSendableMock()
         
         sut.testVarReturn = "testVar"
         sut.mock.testFunc.returnValue = 1

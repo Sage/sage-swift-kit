@@ -56,6 +56,8 @@ public enum AutoMockable: PeerMacro {
         let filteredInheritedTypes = inheritedTypes.filter {
             $0.type.trimmedDescription != "Sendable"
         }
+
+        let inheritedTypesForMock = containsSendable ? filteredInheritedTypes : inheritedTypes
         
         return [
             DeclSyntax(
@@ -68,8 +70,8 @@ public enum AutoMockable: PeerMacro {
                     inheritanceClause: .init(
                         inheritedTypes: .init(itemsBuilder: {
                             if classInheritance == "true" {
-                                if let inherited = protocolSyntax.inheritanceClause {
-                                    inherited.inheritedTypes
+                                for inheritedType in inheritedTypesForMock {
+                                    inheritedType
                                 }
                             }
                             
@@ -80,8 +82,8 @@ public enum AutoMockable: PeerMacro {
                             )
                             
                             if classInheritance == "false" {
-                                if let inherited = protocolSyntax.inheritanceClause {
-                                    inherited.inheritedTypes
+                                for inheritedType in inheritedTypesForMock {
+                                    inheritedType
                                 }
                             }
                             
