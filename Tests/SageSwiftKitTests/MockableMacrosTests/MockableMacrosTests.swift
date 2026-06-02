@@ -28,6 +28,7 @@ final class MockableMacrosTests: XCTestCase {
         sut.mock.testFunc.returnValue = 1
         
         XCTAssertEqual(sut.testVar, "testVar")
+        XCTAssertEqual(sut.testFunc(), 1)
         XCTAssertEqual(sut.mock.testFunc.called, true)
         XCTAssertEqual(sut.mock.testFunc.calls.count, 1)
         XCTAssertNotNil(sut.mock.testFunc.lastCall)
