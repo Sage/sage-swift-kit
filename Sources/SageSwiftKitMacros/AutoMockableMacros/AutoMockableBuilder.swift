@@ -48,6 +48,15 @@ public enum AutoMockable: PeerMacro {
                 return FunctionsMockData(syntax: casted, accessLevel: accessLevel.tokenSyntax)
             }
         
+        let inheritedTypes = protocolSyntax.inheritanceClause?.inheritedTypes ?? []
+        let containsSendable = inheritedTypes.contains { type in
+            type.type.trimmedDescription == "Sendable"
+        }
+        
+        let filteredInheritedTypes = inheritedTypes.filter {
+            $0.type.trimmedDescription != "Sendable"
+        }
+        
         return [
             DeclSyntax(
                 ClassDeclSyntax(
@@ -63,6 +72,7 @@ public enum AutoMockable: PeerMacro {
                                     inherited.inheritedTypes
                                 }
                             }
+                            
                             InheritedTypeSyntax(
                                 type: IdentifierTypeSyntax(
                                     name: .identifier(procotolName)
@@ -74,6 +84,14 @@ public enum AutoMockable: PeerMacro {
                                     inherited.inheritedTypes
                                 }
                             }
+                            
+                            if containsSendable {
+                                    InheritedTypeSyntax(
+                                        type: IdentifierTypeSyntax(
+                                            name: .identifier("@unchecked Sendable")
+                                        )
+                                    )
+                                }
                         })
                     ),
                     memberBlock: MemberBlockSyntax(

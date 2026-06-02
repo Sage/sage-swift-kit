@@ -12,7 +12,27 @@ import Foundation
 import Combine
 import XCTest
 
+@AutoMockable()
+protocol TestProtocolSendable: Sendable {
+    var testVar: String { get }
+    
+    func testFunc() -> Int
+}
+
 final class MockableMacrosTests: XCTestCase {
+    
+    func testSendable() {
+        var sut = TestProtocolSendableMock()
+        
+        sut.testVarReturn = "testVar"
+        sut.mock.testFunc.returnValue = 1
+        
+        XCTAssertEqual(sut.testVar, "testVar")
+        XCTAssertEqual(sut.mock.testFunc.called, true)
+        XCTAssertEqual(sut.mock.testFunc.calls.count, 1)
+        XCTAssertNotNil(sut.mock.testFunc.lastCall)
+    }
+    
     func testMacro() throws {
 #if canImport(SageSwiftKitMacros)
         assertMacroExpansion(
