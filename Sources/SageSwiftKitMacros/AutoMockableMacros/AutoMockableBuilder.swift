@@ -48,6 +48,17 @@ public enum AutoMockable: PeerMacro {
                 return FunctionsMockData(syntax: casted, accessLevel: accessLevel.tokenSyntax)
             }
         
+        let inheritedTypes = protocolSyntax.inheritanceClause?.inheritedTypes ?? []
+        let containsSendable = inheritedTypes.contains { type in
+            type.type.trimmedDescription == "Sendable"
+        }
+        
+        let filteredInheritedTypes = inheritedTypes.filter {
+            $0.type.trimmedDescription != "Sendable"
+        }
+
+        let inheritedTypesForMock = containsSendable ? filteredInheritedTypes : inheritedTypes
+        
         return [
             DeclSyntax(
                 ClassDeclSyntax(
@@ -59,10 +70,11 @@ public enum AutoMockable: PeerMacro {
                     inheritanceClause: .init(
                         inheritedTypes: .init(itemsBuilder: {
                             if classInheritance == "true" {
-                                if let inherited = protocolSyntax.inheritanceClause {
-                                    inherited.inheritedTypes
+                                for inheritedType in inheritedTypesForMock {
+                                    inheritedType
                                 }
                             }
+                            
                             InheritedTypeSyntax(
                                 type: IdentifierTypeSyntax(
                                     name: .identifier(procotolName)
@@ -70,10 +82,18 @@ public enum AutoMockable: PeerMacro {
                             )
                             
                             if classInheritance == "false" {
-                                if let inherited = protocolSyntax.inheritanceClause {
-                                    inherited.inheritedTypes
+                                for inheritedType in inheritedTypesForMock {
+                                    inheritedType
                                 }
                             }
+                            
+                            if containsSendable {
+                                    InheritedTypeSyntax(
+                                        type: IdentifierTypeSyntax(
+                                            name: .identifier("@unchecked Sendable")
+                                        )
+                                    )
+                                }
                         })
                     ),
                     memberBlock: MemberBlockSyntax(
