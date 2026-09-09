@@ -22,6 +22,7 @@ protocol TestProtocolSendable: Sendable {
 @AutoMockable(accessLevel: "public")
 public protocol TestActorProtocol: Actor {
     func testFunc() -> Int
+    func echo<Value>(_ value: Value) -> Value where Value: Sendable
 }
 
 final class MockableMacrosTests: XCTestCase {
@@ -43,13 +44,17 @@ final class MockableMacrosTests: XCTestCase {
         let sut = TestActorProtocolMock()
         let mocks = await sut.mock
         mocks.testFunc.returnValue = 1
+        mocks.echo_Value.returnValue = "generic"
 
         let result = await sut.testFunc()
+        let genericResult = await sut.echo("input")
 
         XCTAssertEqual(result, 1)
+        XCTAssertEqual(genericResult, "generic")
         XCTAssertTrue(mocks.testFunc.called)
         XCTAssertEqual(mocks.testFunc.calls.count, 1)
         XCTAssertNotNil(mocks.testFunc.lastCall)
+        XCTAssertEqual(mocks.echo_Value.lastCall?.value as? String, "input")
     }
 
     func testActorMacroExpansion() throws {

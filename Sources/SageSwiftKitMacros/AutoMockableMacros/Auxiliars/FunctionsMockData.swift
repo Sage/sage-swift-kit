@@ -34,6 +34,8 @@ struct FunctionsMockData {
     var mocksVarName: String { "mock" }
     
     var needThrows: Bool { syntax.signature.effectSpecifiers?.throwsSpecifier != nil }
+
+    var isGeneric: Bool { syntax.genericParameterClause != nil }
     
     init(syntax: FunctionDeclSyntax, accessLevel: TokenSyntax) {
         self.syntax = syntax
@@ -87,5 +89,13 @@ extension FunctionsMockData {
         }
         
         return ImplicitlyUnwrappedOptionalTypeSyntax(wrappedType: returnType.type).description
+    }
+
+    var mockReturnValue: String? {
+        guard returnValue != nil else {
+            return nil
+        }
+
+        return isGeneric ? "Any?" : returnValue
     }
 }
