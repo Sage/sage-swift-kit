@@ -19,6 +19,11 @@ protocol TestProtocolSendable: Sendable {
     func testFunc() -> Int
 }
 
+@AutoMockable(accessLevel: "public")
+public protocol TestActorProtocol: Actor {
+    func testFunc() -> Int
+}
+
 final class MockableMacrosTests: XCTestCase {
     
     func testSendable() {
@@ -32,6 +37,46 @@ final class MockableMacrosTests: XCTestCase {
         XCTAssertEqual(sut.mock.testFunc.called, true)
         XCTAssertEqual(sut.mock.testFunc.calls.count, 1)
         XCTAssertNotNil(sut.mock.testFunc.lastCall)
+    }
+
+    func testActor() async {
+        let sut = TestActorProtocolMock()
+        let mocks = await sut.mock
+        mocks.testFunc.returnValue = 1
+
+        let result = await sut.testFunc()
+
+        XCTAssertEqual(result, 1)
+        XCTAssertTrue(mocks.testFunc.called)
+        XCTAssertEqual(mocks.testFunc.calls.count, 1)
+        XCTAssertNotNil(mocks.testFunc.lastCall)
+    }
+
+    func testActorMacroExpansion() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    @AutoMockable(accessLevel: "public")
+    protocol Worker: Actor {
+    }
+    """,
+    expandedSource: """
+    protocol Worker: Actor {
+    }
+
+    public actor WorkerMock: Worker, Actor {
+        public init() {
+        }
+        public final class FunctionMocks: @unchecked Sendable {
+        }
+        public var mock = FunctionMocks()
+    }
+    """,
+    macros: mockableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
     }
     
     func testMacro() throws {

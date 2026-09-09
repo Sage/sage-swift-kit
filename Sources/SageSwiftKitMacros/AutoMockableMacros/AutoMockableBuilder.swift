@@ -44,13 +44,16 @@ public enum AutoMockable: PeerMacro {
                 guard let casted = item.decl.as(FunctionDeclSyntax.self) else {
                     return nil
                 }
-                
+
                 return FunctionsMockData(syntax: casted, accessLevel: accessLevel.tokenSyntax)
             }
         
         let inheritedTypes = protocolSyntax.inheritanceClause?.inheritedTypes ?? []
         let containsSendable = inheritedTypes.contains { type in
             type.type.trimmedDescription == "Sendable"
+        }
+        let isActor = inheritedTypes.contains { type in
+            type.type.trimmedDescription == "Actor"
         }
         
         let filteredInheritedTypes = inheritedTypes.filter {
@@ -59,6 +62,114 @@ public enum AutoMockable: PeerMacro {
 
         let inheritedTypesForMock = containsSendable ? filteredInheritedTypes : inheritedTypes
         
+        let inheritanceClause = InheritanceClauseSyntax(
+            inheritedTypes: .init(itemsBuilder: {
+                if classInheritance == "true" {
+                    for inheritedType in inheritedTypesForMock {
+                        inheritedType
+                    }
+                }
+
+                InheritedTypeSyntax(
+                    type: IdentifierTypeSyntax(
+                        name: .identifier(procotolName)
+                    )
+                )
+
+                if classInheritance == "false" {
+                    for inheritedType in inheritedTypesForMock {
+                        inheritedType
+                    }
+                }
+
+                if containsSendable {
+                    InheritedTypeSyntax(
+                        type: IdentifierTypeSyntax(
+                            name: .identifier("@unchecked Sendable")
+                        )
+                    )
+                }
+            })
+        )
+
+        let memberBlock = MemberBlockSyntax(
+            members: try MemberBlockItemListSyntax(itemsBuilder: {
+                // Init
+
+                if classInheritance == "false" {
+                    InitializerDeclSyntax(
+                        modifiers: .init(itemsBuilder: {
+                            DeclModifierSyntax(name: accessLevel.tokenSyntax)
+                        }),
+                        signature: .init(
+                            parameterClause: .init(
+                                parameters: .init(
+                                    itemsBuilder: {}
+                                )
+                            )
+                        ),
+                        body: .init(
+                            statements: .init(
+                                itemsBuilder: {
+
+                                }
+                            )
+                        )
+                    )
+                }
+
+                // Classes that has mock data for each function
+                for funcData in functionsToMock {
+                    ClassMockForFunctionBuilder(funcData: funcData).build()
+                }
+
+                // Class with all functions mock
+                FunctionMocksClassBuilder(
+                    functions: functionsToMock,
+                    accessLevel: accessLevel.tokenSyntax
+                ).build()
+
+                // Variable mocks
+                FunctionMocksClassBuilder(
+                    functions: functionsToMock,
+                    accessLevel: accessLevel.tokenSyntax
+                ).buildVarForTheClass()
+
+                // Implementation of each variable
+                for variable in variablesToMock {
+                    let varConformance = ProtocolVarsConformanceBuilder(
+                        variable: variable,
+                        accessLevel: accessLevel.tokenSyntax
+                    )
+
+                    varConformance.buildReturnVar()
+                    varConformance.build()
+                }
+
+                // Implementation of each function
+                for data in functionsToMock {
+                    try ProtocolFunctionsConformanceBuilder(
+                        data: data
+                    ).build()
+                }
+            })
+        )
+
+        if isActor {
+            return [
+                DeclSyntax(
+                    ActorDeclSyntax(
+                        modifiers: .init(itemsBuilder: {
+                            DeclModifierSyntax(name: accessLevel.tokenSyntax)
+                        }),
+                        name: .identifier("\(procotolName)Mock"),
+                        inheritanceClause: inheritanceClause,
+                        memberBlock: memberBlock
+                    )
+                )
+            ]
+        }
+
         return [
             DeclSyntax(
                 ClassDeclSyntax(
@@ -67,97 +178,8 @@ public enum AutoMockable: PeerMacro {
                         DeclModifierSyntax(name: .keyword(.final))
                     }),
                     name: .identifier("\(procotolName)Mock"),
-                    inheritanceClause: .init(
-                        inheritedTypes: .init(itemsBuilder: {
-                            if classInheritance == "true" {
-                                for inheritedType in inheritedTypesForMock {
-                                    inheritedType
-                                }
-                            }
-                            
-                            InheritedTypeSyntax(
-                                type: IdentifierTypeSyntax(
-                                    name: .identifier(procotolName)
-                                )
-                            )
-                            
-                            if classInheritance == "false" {
-                                for inheritedType in inheritedTypesForMock {
-                                    inheritedType
-                                }
-                            }
-                            
-                            if containsSendable {
-                                    InheritedTypeSyntax(
-                                        type: IdentifierTypeSyntax(
-                                            name: .identifier("@unchecked Sendable")
-                                        )
-                                    )
-                                }
-                        })
-                    ),
-                    memberBlock: MemberBlockSyntax(
-                        members: try MemberBlockItemListSyntax(itemsBuilder: {
-                            // Init
-                            
-                            if classInheritance == "false" {
-                                InitializerDeclSyntax(
-                                    modifiers: .init(itemsBuilder: {
-                                        DeclModifierSyntax(name: accessLevel.tokenSyntax)
-                                    }),
-                                    signature: .init(
-                                        parameterClause: .init(
-                                            parameters: .init(
-                                                itemsBuilder: {}
-                                            )
-                                        )
-                                    ),
-                                    body: .init(
-                                        statements: .init(
-                                            itemsBuilder: {
-                                                
-                                            }
-                                        )
-                                    )
-                                )
-                            }
-                            
-                            // Classes that has mock data for each function
-                            for funcData in functionsToMock {
-                                ClassMockForFunctionBuilder(funcData: funcData).build()
-                            }
-                            
-                            // Class with all functions mock
-                            FunctionMocksClassBuilder(
-                                functions: functionsToMock,
-                                accessLevel: accessLevel.tokenSyntax
-                            ).build()
-                            
-                            // Variable mocks
-                            FunctionMocksClassBuilder(
-                                functions: functionsToMock,
-                                accessLevel: accessLevel.tokenSyntax
-                            ).buildVarForTheClass()
-                            
-                            // Implementation of each variable
-                            for variable in variablesToMock {
-                                let varConformance = ProtocolVarsConformanceBuilder(
-                                    variable: variable,
-                                    accessLevel: accessLevel.tokenSyntax
-                                )
-                                
-                                varConformance.buildReturnVar()
-                                varConformance.build()
-                            }
-                            
-                            // Implementation of each function
-                            for data in functionsToMock {
-                                try ProtocolFunctionsConformanceBuilder(
-                                    data: data
-                                ).build()
-                            }
-                        })
-                    )
+                    inheritanceClause: inheritanceClause,
+                    memberBlock: memberBlock
                 )
             )
         ]
