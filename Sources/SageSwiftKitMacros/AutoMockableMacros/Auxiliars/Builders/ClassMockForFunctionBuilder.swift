@@ -48,7 +48,7 @@ struct ClassMockForFunctionBuilder {
                         
                         buildCalled()
                         
-                        if let returnValue = funcData.returnValue {
+                        if let returnValue = funcData.mockReturnValue {
                             VariableDeclSyntax(
                                 modifiers: .init(itemsBuilder: {
                                     .init(name: funcData.accessLevel)
@@ -118,7 +118,9 @@ extension ClassMockForFunctionBuilder {
                         Keyword.let,
                         name: PatternSyntax(stringLiteral: parameter.name),
                         type: TypeAnnotationSyntax(
-                            type: TypeSyntax(stringLiteral: parameter.noEscapingType)
+                            type: TypeSyntax(
+                                stringLiteral: funcData.isGeneric ? "Any" : parameter.noEscapingType
+                            )
                         )
                     )
                 }

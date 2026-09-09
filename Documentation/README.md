@@ -208,12 +208,14 @@ Of course you can combine all of them:
 ## AutoMockable Macro
 
 #### Auto Mockable - @AutoMockable(accessLevel: String, classInheritance: Bool)
-Generates a mock implementation of a protocol, perfect for unit testing. The macro creates a final class that conforms to your protocol.
+
+Generates a mock implementation of a protocol, perfect for unit testing. The macro creates a final class that conforms to a regular protocol, or an actor when the protocol inherits from `Actor`.
 
 **Requirements**: The `#if TESTING` condition is used to enable/disable the macro. You need to add the `-DTESTING` compiler flag to your test targets.
 
 **Parameters**:
-- `accessLevel`: The access level for the generated mock class (default: "internal")
+
+- `accessLevel`: The access level for the generated mock type (default: "internal")
 - `classInheritance`: Whether the mock should inherit from the protocol's superclasses (default: false)
 
 ##### Example Usage
@@ -228,6 +230,45 @@ protocol UserService {
 ```
 
 This generates a `UserServiceMock` class that:
+
 - Conforms to `UserService` protocol
 - Tracks all method calls for assertion in tests
 - Provides mock data for testing
+
+##### Actor protocols
+
+When a protocol inherits from `Actor`, its mock is generated as an actor instead of a final class:
+
+```swift
+@AutoMockable(accessLevel: "public")
+public protocol BackgroundWorker: Actor {
+    func process(_ value: String) -> String
+}
+
+let worker = BackgroundWorkerMock()
+let mocks = await worker.mock
+mocks.process_Value.returnValue = "processed"
+
+let result = await worker.process("input")
+```
+
+The generated declaration is `public actor BackgroundWorkerMock`. Access to its mock container and protocol methods follows normal actor isolation rules.
+
+##### Generic functions
+
+Generic method parameters and return values are supported, including trailing `where` clauses:
+
+```swift
+@AutoMockable()
+protocol ValueTransforming {
+    func transform<T>(_ value: T) -> T where T: Sendable
+}
+
+let transformer = ValueTransformingMock()
+transformer.mock.transform_Value.returnValue = "output"
+
+let result: String = transformer.transform("input")
+let receivedValue = transformer.mock.transform_Value.lastCall?.value as? String
+```
+
+Because `T` exists only for the duration of each method call, generic parameters are recorded as `Any` and generic return values are configured as `Any?`. Cast captured arguments to their expected concrete type when asserting them. The configured return value must match the concrete return type inferred at the call site.

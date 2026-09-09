@@ -25,7 +25,9 @@ struct ProtocolFunctionsConformanceBuilder {
                 .init(name: data.accessLevel)
             }),
             name: data.name,
+            genericParameterClause: data.syntax.genericParameterClause,
             signature: data.syntax.signature,
+            genericWhereClause: data.syntax.genericWhereClause,
             body: .init(statements: .init(itemsBuilder: {
                 buildCall()
                 
@@ -97,10 +99,17 @@ struct ProtocolFunctionsConformanceBuilder {
     }
     
     private func buildReturn() -> ReturnStmtSyntax {
+        let returnExpression: String
+        if data.isGeneric, let returnType = data.returnType?.type.trimmedDescription {
+            returnExpression = "\(mockEntity).returnValue as! \(returnType)"
+        } else {
+            returnExpression = "\(mockEntity).returnValue"
+        }
+
         return ReturnStmtSyntax(
             returnKeyword: .keyword(.return),
             expression: DeclReferenceExprSyntax(
-                baseName: "\(mockEntity).returnValue".tokenSyntax
+                baseName: returnExpression.tokenSyntax
             )
         )
     }
