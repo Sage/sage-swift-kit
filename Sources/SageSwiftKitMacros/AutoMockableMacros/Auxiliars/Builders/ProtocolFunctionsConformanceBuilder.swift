@@ -100,7 +100,8 @@ struct ProtocolFunctionsConformanceBuilder {
     
     private func buildReturn() -> ReturnStmtSyntax {
         let returnExpression: String
-        if data.isGeneric, let returnType = data.returnType?.type.trimmedDescription {
+        if data.requiresTypeErasedReturnValue,
+           let returnType = data.returnType?.type.trimmedDescription {
             returnExpression = "\(mockEntity).returnValue as! \(returnType)"
         } else {
             returnExpression = "\(mockEntity).returnValue"
