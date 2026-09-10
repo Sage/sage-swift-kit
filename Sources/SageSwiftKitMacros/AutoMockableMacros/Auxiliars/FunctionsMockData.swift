@@ -36,6 +36,14 @@ struct FunctionsMockData {
     var needThrows: Bool { syntax.signature.effectSpecifiers?.throwsSpecifier != nil }
 
     var isGeneric: Bool { syntax.genericParameterClause != nil }
+
+    var returnsSelf: Bool {
+        returnType?.type.tokens(viewMode: .sourceAccurate).contains {
+            $0.tokenKind == .keyword(.Self)
+        } ?? false
+    }
+
+    var requiresTypeErasedReturnValue: Bool { isGeneric || returnsSelf }
     
     init(syntax: FunctionDeclSyntax, accessLevel: TokenSyntax) {
         self.syntax = syntax
@@ -96,6 +104,6 @@ extension FunctionsMockData {
             return nil
         }
 
-        return isGeneric ? "Any?" : returnValue
+        return requiresTypeErasedReturnValue ? "Any?" : returnValue
     }
 }

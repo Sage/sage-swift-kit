@@ -24,6 +24,11 @@ protocol TestGenericProtocol {
     func identity<T>(_ value: T) -> T
 }
 
+@AutoMockable()
+protocol TestBuilderProtocol {
+    func setForcedToken(_ forcedToken: String) -> Self
+}
+
 @AutoMockable(accessLevel: "public")
 public protocol TestActorProtocol: Actor {
     func testFunc() -> Int
@@ -100,6 +105,67 @@ final class MockableMacrosTests: XCTestCase {
         internal func identity<T>(_ value: T) -> T {
             self.mock.identity_Value.calls.append(.init(value: value))
             return self.mock.identity_Value.returnValue as! T
+        }
+    }
+    """,
+    macros: mockableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
+
+    func testFunctionReturningSelf() {
+        let sut = TestBuilderProtocolMock()
+        sut.mock.setForcedToken_ForcedToken.returnValue = sut
+
+        let result = sut.setForcedToken("token")
+
+        XCTAssertTrue(result === sut)
+        XCTAssertTrue(sut.mock.setForcedToken_ForcedToken.called)
+        XCTAssertEqual(sut.mock.setForcedToken_ForcedToken.calls.count, 1)
+        XCTAssertEqual(sut.mock.setForcedToken_ForcedToken.lastCall?.forcedToken, "token")
+    }
+
+    func testFunctionReturningSelfMacroExpansion() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    @AutoMockable()
+    protocol Builder {
+        func setForcedToken(_ forcedToken: String) -> Self
+    }
+    """,
+    expandedSource: """
+    protocol Builder {
+        func setForcedToken(_ forcedToken: String) -> Self
+    }
+
+    internal final class BuilderMock: Builder {
+        internal init() {
+        }
+        internal final class SetForcedToken_ForcedToken: @unchecked Sendable {
+            internal struct ParametersMock: @unchecked Sendable {
+                internal let forcedToken: String
+            }
+            internal var calls: [ParametersMock] = []
+            internal var lastCall: ParametersMock? {
+                return self.calls.last
+            }
+            internal var called: Bool {
+                return self.lastCall != nil
+            }
+            internal var returnValue: Any?
+            init() {
+            }
+        }
+        internal final class FunctionMocks: @unchecked Sendable {
+            internal var setForcedToken_ForcedToken = SetForcedToken_ForcedToken()
+        }
+        internal var mock = FunctionMocks()
+        internal func setForcedToken(_ forcedToken: String) -> Self {
+            self.mock.setForcedToken_ForcedToken.calls.append(.init(forcedToken: forcedToken))
+            return self.mock.setForcedToken_ForcedToken.returnValue as! Self
         }
     }
     """,
