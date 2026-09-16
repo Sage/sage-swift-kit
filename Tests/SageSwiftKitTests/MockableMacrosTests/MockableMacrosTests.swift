@@ -29,7 +29,7 @@ protocol TestBuilderProtocol {
     func setForcedToken(_ forcedToken: String) -> Self
 }
 
-enum NetworkError: Error {
+public enum NetworkError: Error {
     case offline
 }
 
@@ -220,6 +220,65 @@ final class MockableMacrosTests: XCTestCase {
         public final class FunctionMocks: @unchecked Sendable {
         }
         public var mock = FunctionMocks()
+    }
+    """,
+    macros: mockableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
+
+    func testPublicGenericActorProtocolMacroExpansion() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    public protocol SHREnpoint {}
+
+    @AutoMockable(accessLevel: "public")
+    public protocol SHRAPIRequesterProtocol<Endpoint>: Actor {
+        associatedtype Endpoint: SHREnpoint
+
+        func execute() async throws(NetworkError) -> String
+    }
+    """,
+    expandedSource: """
+    public protocol SHREnpoint {}
+    public protocol SHRAPIRequesterProtocol<Endpoint>: Actor {
+        associatedtype Endpoint: SHREnpoint
+
+        func execute() async throws(NetworkError) -> String
+    }
+
+    public actor SHRAPIRequesterProtocolMock<Endpoint: SHREnpoint>: SHRAPIRequesterProtocol<Endpoint>, Actor {
+        public init() {
+        }
+        public final class Execute: @unchecked Sendable {
+            public struct ParametersMock: @unchecked Sendable {
+            }
+            public var calls: [ParametersMock] = []
+            public var lastCall: ParametersMock? {
+                return self.calls.last
+            }
+            public var called: Bool {
+                return self.lastCall != nil
+            }
+            public var returnValue: String!
+            public var returnError: NetworkError?
+            init() {
+            }
+        }
+        public final class FunctionMocks: @unchecked Sendable {
+            public var execute = Execute()
+        }
+        public var mock = FunctionMocks()
+        public func execute() async throws(NetworkError) -> String {
+            self.mock.execute.calls.append(.init())
+            if let error = self.mock.execute.returnError {
+                throw error
+            }
+            return self.mock.execute.returnValue
+        }
     }
     """,
     macros: mockableMacros
