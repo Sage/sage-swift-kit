@@ -70,7 +70,7 @@ struct ClassMockForFunctionBuilder {
                                 name: "returnError",
                                 type: TypeAnnotationSyntax(
                                     type: OptionalTypeSyntax(
-                                        wrappedType: IdentifierTypeSyntax(name: "Error")
+                                        wrappedType: TypeSyntax(stringLiteral: funcData.thrownErrorType ?? "Error")
                                     )
                                 )
                             )

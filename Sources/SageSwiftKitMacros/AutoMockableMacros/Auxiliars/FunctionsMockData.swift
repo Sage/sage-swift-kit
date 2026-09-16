@@ -33,7 +33,11 @@ struct FunctionsMockData {
     
     var mocksVarName: String { "mock" }
     
-    var needThrows: Bool { syntax.signature.effectSpecifiers?.throwsSpecifier != nil }
+    var needThrows: Bool { syntax.signature.effectSpecifiers?.throwsClause != nil }
+
+    var thrownErrorType: String? {
+        syntax.signature.effectSpecifiers?.throwsClause?.type?.trimmedDescription
+    }
 
     var isGeneric: Bool { syntax.genericParameterClause != nil }
 
