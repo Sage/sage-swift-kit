@@ -142,6 +142,33 @@ struct DecodeVariableBuild {
     }
     
     func buildStringOrDouble(attribute: AttributeSyntax) -> CodeBlockItemSyntaxBuilder {
+        if type == "Double" || type == "Double?" {
+            let conditionalName = "tmp" + varName.capitalized
+            let fallback: [CodeBlockItemSyntaxBuilder]
+
+            if type == "Double?" {
+                let stringBuilder = IfExprSyntaxBuilder(
+                    condition: "if let \(conditionalName) = try? container.decode(String.self, forKey: .\(varName))",
+                    body: [.code("\(varName) = Double(\(conditionalName))")],
+                    elseBody: [.code("\(varName) = nil")]
+                )
+                fallback = [.builder(stringBuilder)]
+            } else {
+                fallback = [
+                    .code("let \(conditionalName) = try container.decode(String.self, forKey: .\(varName))"),
+                    .code("guard let convertedValue = Double(\(conditionalName)) else { throw DecodingError.dataCorruptedError(forKey: .\(varName), in: container, debugDescription: \"Expected a Double or numeric string\") }"),
+                    .code("\(varName) = convertedValue")
+                ]
+            }
+
+            let doubleBuilder = IfExprSyntaxBuilder(
+                condition: "if let \(conditionalName) = try? container.decode(Double.self, forKey: .\(varName))",
+                body: [.code("\(varName) = \(conditionalName)")],
+                elseBody: fallback
+            )
+            return .builder(doubleBuilder)
+        }
+
         guard type == "String?" else {
             return buildBasicDecode()
         }
