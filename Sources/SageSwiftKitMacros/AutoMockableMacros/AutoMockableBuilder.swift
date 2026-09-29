@@ -9,6 +9,43 @@ import SwiftSyntaxBuilder
 
 public enum AutoMockable: PeerMacro {
     static var mocksVarName: String { "mock" }
+
+    static func genericParameterClause(
+        for primaryAssociatedTypeClause: PrimaryAssociatedTypeClauseSyntax?,
+        members: MemberBlockItemListSyntax
+    ) -> GenericParameterClauseSyntax? {
+        guard let primaryAssociatedTypeClause else {
+            return nil
+        }
+
+        let associatedTypeConstraints = Dictionary(
+            uniqueKeysWithValues: members.compactMap { item -> (String, InheritanceClauseSyntax)? in
+                guard let associatedType = item.decl.as(AssociatedTypeDeclSyntax.self),
+                      let inheritanceClause = associatedType.inheritanceClause else {
+                    return nil
+                }
+
+                return (associatedType.name.text, inheritanceClause)
+            }
+        )
+
+        return GenericParameterClauseSyntax(
+            leftAngle: primaryAssociatedTypeClause.leftAngle,
+            parameters: .init(itemsBuilder: {
+                for parameter in primaryAssociatedTypeClause.primaryAssociatedTypes {
+                    let inheritanceClause = associatedTypeConstraints[parameter.name.text]
+
+                    GenericParameterSyntax(
+                        name: parameter.name,
+                        colon: inheritanceClause == nil ? nil : .colonToken(),
+                        inheritedType: inheritanceClause?.inheritedTypes.first?.type,
+                        trailingComma: parameter.trailingComma
+                    )
+                }
+            }),
+            rightAngle: primaryAssociatedTypeClause.rightAngle
+        )
+    }
     
     public static func expansion(
         of node: AttributeSyntax,
@@ -30,12 +67,17 @@ public enum AutoMockable: PeerMacro {
             .findArgument(id: "classInheritance")?
             .adapter
             .expression(cast: BooleanLiteralExprSyntax.self)?.literal.text ?? "false"
-        
-        let procotolName = protocolSyntax.name.text
-        
+
         guard let members = declaration.as(ProtocolDeclSyntax.self)?.memberBlock.members else {
             return []
         }
+        
+        let procotolName = protocolSyntax.name.text
+        let primaryAssociatedTypeClause = protocolSyntax.primaryAssociatedTypeClause
+        let genericParameterClause = genericParameterClause(for: primaryAssociatedTypeClause, members: members)
+        let protocolConformanceType = TypeSyntax(
+            stringLiteral: procotolName + (primaryAssociatedTypeClause?.trimmedDescription ?? "")
+        )
         
         let variablesToMock: [VariableDeclSyntax] = members.compactMap { $0.decl.as(VariableDeclSyntax.self) }
         
@@ -70,11 +112,7 @@ public enum AutoMockable: PeerMacro {
                     }
                 }
 
-                InheritedTypeSyntax(
-                    type: IdentifierTypeSyntax(
-                        name: .identifier(procotolName)
-                    )
-                )
+                InheritedTypeSyntax(type: protocolConformanceType)
 
                 if classInheritance == "false" {
                     for inheritedType in inheritedTypesForMock {
@@ -94,8 +132,6 @@ public enum AutoMockable: PeerMacro {
 
         let memberBlock = MemberBlockSyntax(
             members: try MemberBlockItemListSyntax(itemsBuilder: {
-                // Init
-
                 if classInheritance == "false" {
                     InitializerDeclSyntax(
                         modifiers: .init(itemsBuilder: {
@@ -110,32 +146,26 @@ public enum AutoMockable: PeerMacro {
                         ),
                         body: .init(
                             statements: .init(
-                                itemsBuilder: {
-
-                                }
+                                itemsBuilder: {}
                             )
                         )
                     )
                 }
 
-                // Classes that has mock data for each function
                 for funcData in functionsToMock {
                     ClassMockForFunctionBuilder(funcData: funcData).build()
                 }
 
-                // Class with all functions mock
                 FunctionMocksClassBuilder(
                     functions: functionsToMock,
                     accessLevel: accessLevel.tokenSyntax
                 ).build()
 
-                // Variable mocks
                 FunctionMocksClassBuilder(
                     functions: functionsToMock,
                     accessLevel: accessLevel.tokenSyntax
                 ).buildVarForTheClass()
 
-                // Implementation of each variable
                 for variable in variablesToMock {
                     let varConformance = ProtocolVarsConformanceBuilder(
                         variable: variable,
@@ -146,7 +176,6 @@ public enum AutoMockable: PeerMacro {
                     varConformance.build()
                 }
 
-                // Implementation of each function
                 for data in functionsToMock {
                     try ProtocolFunctionsConformanceBuilder(
                         data: data
@@ -163,7 +192,9 @@ public enum AutoMockable: PeerMacro {
                             DeclModifierSyntax(name: accessLevel.tokenSyntax)
                         }),
                         name: .identifier("\(procotolName)Mock"),
+                        genericParameterClause: genericParameterClause,
                         inheritanceClause: inheritanceClause,
+                        genericWhereClause: protocolSyntax.genericWhereClause,
                         memberBlock: memberBlock
                     )
                 )
@@ -178,7 +209,9 @@ public enum AutoMockable: PeerMacro {
                         DeclModifierSyntax(name: .keyword(.final))
                     }),
                     name: .identifier("\(procotolName)Mock"),
+                    genericParameterClause: genericParameterClause,
                     inheritanceClause: inheritanceClause,
+                    genericWhereClause: protocolSyntax.genericWhereClause,
                     memberBlock: memberBlock
                 )
             )

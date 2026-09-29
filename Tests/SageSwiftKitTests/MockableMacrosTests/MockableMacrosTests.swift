@@ -24,6 +24,20 @@ protocol TestGenericProtocol {
     func identity<T>(_ value: T) -> T
 }
 
+@AutoMockable()
+protocol TestBuilderProtocol {
+    func setForcedToken(_ forcedToken: String) -> Self
+}
+
+public enum NetworkError: Error {
+    case offline
+}
+
+@AutoMockable()
+protocol TestAsyncThrowsProtocol {
+    func fetchValue() async throws(NetworkError) -> String
+}
+
 @AutoMockable(accessLevel: "public")
 public protocol TestActorProtocol: Actor {
     func testFunc() -> Int
@@ -110,6 +124,67 @@ final class MockableMacrosTests: XCTestCase {
 #endif
     }
 
+    func testFunctionReturningSelf() {
+        let sut = TestBuilderProtocolMock()
+        sut.mock.setForcedToken_ForcedToken.returnValue = sut
+
+        let result = sut.setForcedToken("token")
+
+        XCTAssertTrue(result === sut)
+        XCTAssertTrue(sut.mock.setForcedToken_ForcedToken.called)
+        XCTAssertEqual(sut.mock.setForcedToken_ForcedToken.calls.count, 1)
+        XCTAssertEqual(sut.mock.setForcedToken_ForcedToken.lastCall?.forcedToken, "token")
+    }
+
+    func testFunctionReturningSelfMacroExpansion() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    @AutoMockable()
+    protocol Builder {
+        func setForcedToken(_ forcedToken: String) -> Self
+    }
+    """,
+    expandedSource: """
+    protocol Builder {
+        func setForcedToken(_ forcedToken: String) -> Self
+    }
+
+    internal final class BuilderMock: Builder {
+        internal init() {
+        }
+        internal final class SetForcedToken_ForcedToken: @unchecked Sendable {
+            internal struct ParametersMock: @unchecked Sendable {
+                internal let forcedToken: String
+            }
+            internal var calls: [ParametersMock] = []
+            internal var lastCall: ParametersMock? {
+                return self.calls.last
+            }
+            internal var called: Bool {
+                return self.lastCall != nil
+            }
+            internal var returnValue: Any?
+            init() {
+            }
+        }
+        internal final class FunctionMocks: @unchecked Sendable {
+            internal var setForcedToken_ForcedToken = SetForcedToken_ForcedToken()
+        }
+        internal var mock = FunctionMocks()
+        internal func setForcedToken(_ forcedToken: String) -> Self {
+            self.mock.setForcedToken_ForcedToken.calls.append(.init(forcedToken: forcedToken))
+            return self.mock.setForcedToken_ForcedToken.returnValue as! Self
+        }
+    }
+    """,
+    macros: mockableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
+
     func testActor() async {
         let sut = TestActorProtocolMock()
         let mocks = await sut.mock
@@ -145,6 +220,124 @@ final class MockableMacrosTests: XCTestCase {
         public final class FunctionMocks: @unchecked Sendable {
         }
         public var mock = FunctionMocks()
+    }
+    """,
+    macros: mockableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
+
+    func testPublicGenericActorProtocolMacroExpansion() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    public protocol SHREnpoint {}
+
+    @AutoMockable(accessLevel: "public")
+    public protocol SHRAPIRequesterProtocol<Endpoint>: Actor {
+        associatedtype Endpoint: SHREnpoint
+
+        func execute() async throws(NetworkError) -> String
+    }
+    """,
+    expandedSource: """
+    public protocol SHREnpoint {}
+    public protocol SHRAPIRequesterProtocol<Endpoint>: Actor {
+        associatedtype Endpoint: SHREnpoint
+
+        func execute() async throws(NetworkError) -> String
+    }
+
+    public actor SHRAPIRequesterProtocolMock<Endpoint: SHREnpoint>: SHRAPIRequesterProtocol<Endpoint>, Actor {
+        public init() {
+        }
+        public final class Execute: @unchecked Sendable {
+            public struct ParametersMock: @unchecked Sendable {
+            }
+            public var calls: [ParametersMock] = []
+            public var lastCall: ParametersMock? {
+                return self.calls.last
+            }
+            public var called: Bool {
+                return self.lastCall != nil
+            }
+            public var returnValue: String!
+            public var returnError: NetworkError?
+            init() {
+            }
+        }
+        public final class FunctionMocks: @unchecked Sendable {
+            public var execute = Execute()
+        }
+        public var mock = FunctionMocks()
+        public func execute() async throws(NetworkError) -> String {
+            self.mock.execute.calls.append(.init())
+            if let error = self.mock.execute.returnError {
+                throw error
+            }
+            return self.mock.execute.returnValue
+        }
+    }
+    """,
+    macros: mockableMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
+
+    func testAsyncTypedThrowsMacroExpansion() throws {
+#if canImport(SageSwiftKitMacros)
+        assertMacroExpansion(
+    """
+    enum NetworkError: Error {
+        case offline
+    }
+
+    @AutoMockable()
+    protocol AsyncService {
+        func fetchValue() async throws(NetworkError) -> String
+    }
+    """,
+    expandedSource: """
+    enum NetworkError: Error {
+        case offline
+    }
+    protocol AsyncService {
+        func fetchValue() async throws(NetworkError) -> String
+    }
+
+    internal final class AsyncServiceMock: AsyncService {
+        internal init() {
+        }
+        internal final class FetchValue: @unchecked Sendable {
+            internal struct ParametersMock: @unchecked Sendable {
+            }
+            internal var calls: [ParametersMock] = []
+            internal var lastCall: ParametersMock? {
+                return self.calls.last
+            }
+            internal var called: Bool {
+                return self.lastCall != nil
+            }
+            internal var returnValue: String!
+            internal var returnError: NetworkError?
+            init() {
+            }
+        }
+        internal final class FunctionMocks: @unchecked Sendable {
+            internal var fetchValue = FetchValue()
+        }
+        internal var mock = FunctionMocks()
+        internal func fetchValue() async throws(NetworkError) -> String {
+            self.mock.fetchValue.calls.append(.init())
+            if let error = self.mock.fetchValue.returnError {
+                throw error
+            }
+            return self.mock.fetchValue.returnValue
+        }
     }
     """,
     macros: mockableMacros

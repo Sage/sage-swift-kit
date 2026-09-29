@@ -19,6 +19,7 @@ public macro CustomCodable(nestedProperty: String? = nil) = #externalMacro(modul
 @attached(peer)
 public macro StringOrInt() = #externalMacro(module: "SageSwiftKitMacros", type: "StringOrInt")
 
+/// Decodes a JSON string or number into a `String?`, `Double`, or `Double?` property.
 @attached(peer)
 public macro StringOrDouble() = #externalMacro(module: "SageSwiftKitMacros", type: "StringOrDouble")
 
